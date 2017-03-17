@@ -1,0 +1,74 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+repositories {
+    maven {
+        name 'DVS1 Maven FS' // TCon, JEI
+        url 'http://dvs1.progwml6.com/files/maven'
+    }
+}
+
+group = 'us.drullk.vegetablecarnival'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    //deobfCompile "slimeknights.mantle:Mantle:${minecraft_version}-${mantle_version}"
+    //deobfCompile "slimeknights:TConstruct:${minecraft_version}-${tconstruct_version}"
+
+    deobfCompile "mezz.jei:jei_${minecraft_version}:${jei_version}"
+}
+
+version = "${mod_version}"
+
+minecraft {
+    version = minecraft_version + "-" + forge_version
+    mappings = mappings_version
+    runDir = "run"
+    replace '${version}', project.version
+    useDepAts = true
+}
+
+processResources
+        {
+            // replace stuff in text files, not binary ones.
+            from(sourceSets.main.resources.srcDirs) {
+                include '**/*.info'
+                // replace version and MCVersion
+                expand 'version':project.version, 'mcversion':project.minecraft.version
+            }
+            // copy everything else, thats not text
+            from(sourceSets.main.resources.srcDirs) {
+                exclude '**/*.info'
+            }
+        }
+
+// because the normal output has been made to be obfuscated
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}

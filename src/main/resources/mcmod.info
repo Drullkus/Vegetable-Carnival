@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "vegetablecarnival",
+    "name": "Vegetable Carnival",
+    "description": "Farming",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["Drullkus"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
