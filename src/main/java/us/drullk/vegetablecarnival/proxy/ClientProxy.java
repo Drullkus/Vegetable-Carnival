@@ -43,36 +43,10 @@ public class ClientProxy extends CommonProxy {
             { return new ModelResourceLocation(location, "inventory"); }
         });
 
+        //System.out.println(location);
+
         ModelLoader.registerItemVariants(item, location);
 
         return location;
     }
-
-    /*private static ResourceLocation registerItemModel(Item item)
-    {
-        ResourceLocation itemLocation = null;
-
-        if (item != null)
-        {
-            itemLocation = item.getRegistryName();
-        }
-
-        final ResourceLocation finalItemLocation = itemLocation;
-
-        if (finalItemLocation != null)
-        {
-            ModelLoader.setCustomMeshDefinition(item, new ItemMeshDefinition()
-            {
-                @Nonnull
-                @Override
-                public ModelResourceLocation getModelLocation(@Nonnull ItemStack stack)
-                {
-                    return new ModelResourceLocation(finalItemLocation, "inventory");
-                }
-            });
-
-            ModelLoader.registerItemVariants(item, finalItemLocation);
-        }
-        return finalItemLocation;
-    }*/
 }
