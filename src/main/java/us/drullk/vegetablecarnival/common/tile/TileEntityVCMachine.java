@@ -37,34 +37,37 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
     @Override
     public void update() {
-        if(!this.valid)
+        if (world.isRemote)
         {
-            this.validateFarm();
-        }
-        else
-        {
-            System.out.println("OPERATING");
-
-            this.totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
-            this.totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
-
-            for (int i = 0; i < this.operationsPerTick; i++)
+            if(!this.valid)
             {
-                if(this.operatingPos >= this.totalX * this.totalY)
+                this.validateFarm();
+            }
+            else
+            {
+                System.out.println("OPERATING");
+
+                this.totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
+                this.totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
+
+                for (int i = 0; i < this.operationsPerTick; i++)
                 {
-                    this.operatingPos = 0;
+                    if(this.operatingPos >= this.totalX * this.totalY)
+                    {
+                        this.operatingPos = 0;
+                    }
+
+                    int operatingPosX = (this.operatingPos%this.totalX)-this.radiusX;
+                    int operatingPosY = ((this.operatingPos-(this.operatingPos%this.totalY))/this.totalY)-this.radiusY;
+
+                    // begin zoning
+
+                    //checkZoning(operatingPosX, operatingPosY, 0);
+
+                    // end zoning
+
+                    this.doOperation(operatingPosX, operatingPosY);
                 }
-
-                int operatingPosX = (this.operatingPos%this.totalX)-this.radiusX;
-                int operatingPosY = ((this.operatingPos-(this.operatingPos%this.totalY))/this.totalY)-this.radiusY;
-
-                // begin zoning
-
-                //checkZoning(operatingPosX, operatingPosY, 0);
-
-                // end zoning
-
-                this.doOperation(operatingPosX, operatingPosY);
             }
         }
     }

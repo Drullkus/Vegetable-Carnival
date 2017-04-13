@@ -28,6 +28,8 @@ public class BlockVCMachine extends Block implements ITileEntityProvider {
 
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
+        System.out.println("breaking block");
+
         TileEntity te = worldIn.getTileEntity(pos);
         if (te != null && te instanceof TileEntityVCMachine)
         {

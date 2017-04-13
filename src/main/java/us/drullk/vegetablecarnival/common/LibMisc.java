@@ -13,8 +13,8 @@ public class LibMisc
 
     public static final String DEPENDENCIES = "";
 
-    public static final String COMMON_PROXY = "xxx";
+    public static final String COMMON_PROXY = "us.drullk.vegetablecarnival.proxy.CommonProxy";
 
-    public static final String CLIENT_PROXY = "xxx";
+    public static final String CLIENT_PROXY = "us.drullk.vegetablecarnival.proxy.ClientProxy";
 
 }
