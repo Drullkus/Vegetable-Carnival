@@ -45,8 +45,8 @@ public class VegetableCarnival {
         autoFarmOperator.setUnlocalizedName("vcmachine");
         farmCable.setUnlocalizedName("vccable");
 
-        ItemBlockVC ib_vc_machine = new ItemBlockVC(autoFarmOperator, "vcmachine", false);
-        ItemBlockVC ib_vc_cable = new ItemBlockVC(farmCable, "vccable", true);
+        ItemBlockVC ib_vc_machine = new ItemBlockVC(autoFarmOperator, false);
+        ItemBlockVC ib_vc_cable = new ItemBlockVC(farmCable, true);
 
         register(autoFarmOperator, "vcmachine");
         register(ib_vc_machine, "vcmachine");

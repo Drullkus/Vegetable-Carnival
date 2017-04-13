@@ -1,7 +1,0 @@
-{
-    "parent": "vegetablecarnival:block/cable",
-    "textures": {
-        "top": "vegetablecarnival:blocks/cable_end",
-        "side": "vegetablecarnival:blocks/cable_off"
-    }
-}

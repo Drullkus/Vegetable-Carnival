@@ -4,7 +4,6 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockRotatedPillar;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
@@ -56,8 +55,10 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
 
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-
         TileEntity te = worldIn.getTileEntity(pos);
+
+        System.out.println("Invalidating " + te);
+
         if (te != null && te instanceof TileEntityVCComponent)
         {
             TileEntityVCMachine master = ((TileEntityVCComponent) te).getMaster();

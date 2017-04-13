@@ -9,7 +9,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import us.drullk.vegetablecarnival.common.tile.TileEntityVCComponent;
 import us.drullk.vegetablecarnival.common.tile.TileEntityVCMachine;
 import javax.annotation.ParametersAreNonnullByDefault;
 

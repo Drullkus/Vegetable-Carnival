@@ -1,0 +1,8 @@
+{
+    "parent": "vegetablecarnival:block/cable_y",
+    "textures": {
+        "x": "vegetablecarnival:blocks/cable_off",
+        "y": "vegetablecarnival:blocks/cable_end",
+        "z": "vegetablecarnival:blocks/cable_off"
+    }
+}

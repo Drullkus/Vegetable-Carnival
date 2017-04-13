@@ -1,10 +1,10 @@
 {
     "variants": {
-        "axis=x,valid=false": { "model": "vegetablecarnival:cable_off", "x": 90, "y": 90 },
-        "axis=y,valid=false": { "model": "vegetablecarnival:cable_off", "x": 0, "y": 0 },
-        "axis=z,valid=false": { "model": "vegetablecarnival:cable_off", "x": 90, "y": 0 },
-        "axis=x,valid=true": { "model": "vegetablecarnival:cable_on", "x": 90, "y": 90 },
-        "axis=y,valid=true": { "model": "vegetablecarnival:cable_on", "x": 0, "y": 0 },
-        "axis=z,valid=true": { "model": "vegetablecarnival:cable_on", "x": 90, "y": 0 }
+        "axis=x,valid=false": { "model": "vegetablecarnival:cable_x_off" },
+        "axis=y,valid=false": { "model": "vegetablecarnival:cable_y_off" },
+        "axis=z,valid=false": { "model": "vegetablecarnival:cable_z_off" },
+        "axis=x,valid=true": { "model": "vegetablecarnival:cable_x_on" },
+        "axis=y,valid=true": { "model": "vegetablecarnival:cable_y_on" },
+        "axis=z,valid=true": { "model": "vegetablecarnival:cable_z_on" }
     }
 }

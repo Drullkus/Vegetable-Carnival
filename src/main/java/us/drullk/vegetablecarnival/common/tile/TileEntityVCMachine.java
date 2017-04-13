@@ -4,9 +4,11 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
 import us.drullk.vegetablecarnival.VegetableCarnival;
+import us.drullk.vegetablecarnival.common.block.BlockVCCable;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -36,8 +38,11 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     private final int maxMachineSize = 3;
 
     @Override
-    public void update() {
-        if (world.isRemote)
+    public void update()
+    {
+        //System.out.println("world remoteness is " + !world.isRemote);
+
+        if(!world.isRemote)
         {
             if(!this.valid)
             {
@@ -45,7 +50,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             }
             else
             {
-                System.out.println("OPERATING");
+                //System.out.println("OPERATING");
 
                 this.totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
                 this.totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
@@ -89,8 +94,12 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             TileEntity xMinTE = null;
             TileEntity xMaxTE = null;
 
-            if(this.world.getBlockState(xMin[i-1]).getBlock() == VegetableCarnival.farmCable &&
-                    this.world.getBlockState(xMax[i-1]).getBlock() == VegetableCarnival.farmCable)
+            if(this.world.getBlockState(xMin[i-1]) == VegetableCarnival.farmCable.getDefaultState()
+                    .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
+                    .withProperty(BlockVCCable.VALIDATION, false) &&
+                    this.world.getBlockState(xMax[i-1]) == VegetableCarnival.farmCable.getDefaultState()
+                            .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
+                            .withProperty(BlockVCCable.VALIDATION, false))
             {
                 xMinTE = this.world.getTileEntity(xMin[i-1]);
                 xMaxTE = this.world.getTileEntity(xMax[i-1]);
@@ -116,8 +125,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             TileEntity yMinTE = null;
             TileEntity yMaxTE = null;
 
-            if(this.world.getBlockState(yMin[i-1]).getBlock() == VegetableCarnival.farmCable &&
-                    this.world.getBlockState(yMax[i-1]).getBlock() == VegetableCarnival.farmCable)
+            if(this.world.getBlockState(yMin[i-1]) == VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z) &&
+                    this.world.getBlockState(yMax[i-1]) == VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z))
             {
                 yMinTE = this.world.getTileEntity(yMin[i-1]);
                 yMaxTE = this.world.getTileEntity(yMax[i-1]);
@@ -148,12 +157,16 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                 //System.out.println(xMin[i-1]);
                 ((TileEntityVCComponent) this.world.getTileEntity(xMin[i-1])).setMaster(this);
                 ((TileEntityVCComponent) this.world.getTileEntity(xMax[i-1])).setMaster(this);
+                this.world.setBlockState(xMin[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, true));
+                this.world.setBlockState(xMax[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, true));
             }
 
             for (int i = 1; i <= this.farmMachineRadiusY; i++)
             {
                 ((TileEntityVCComponent) this.world.getTileEntity(yMin[i-1])).setMaster(this);
                 ((TileEntityVCComponent) this.world.getTileEntity(yMax[i-1])).setMaster(this);
+                this.world.setBlockState(yMin[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, true));
+                this.world.setBlockState(yMax[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, true));
             }
         }
         else
@@ -169,26 +182,44 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         for (int i = 1; i <= this.farmMachineRadiusX; i++)
         {
-            ((TileEntityVCComponent) this.world.getTileEntity(new BlockPos(
-                    this.getPos().getX()+i,
-                    this.getPos().getY(),
-                    this.getPos().getZ()))).setMaster(null);
-            ((TileEntityVCComponent) this.world.getTileEntity(new BlockPos(
-                    this.getPos().getX()-i,
-                    this.getPos().getY(),
-                    this.getPos().getZ()))).setMaster(null);
+            BlockPos xMin = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
+            BlockPos xMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
+
+            TileEntity teMin = this.world.getTileEntity(xMin);
+            TileEntity teMax = this.world.getTileEntity(xMin);
+
+            if (teMin != null)
+            {
+                ((TileEntityVCComponent) teMin).setMaster(null);
+                this.world.setBlockState(xMin, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, false));
+            }
+
+            if (teMax != null)
+            {
+                ((TileEntityVCComponent) teMax).setMaster(null);
+                this.world.setBlockState(xMax, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, false));
+            }
         }
 
         for (int i = 1; i <= this.farmMachineRadiusY; i++)
         {
-            ((TileEntityVCComponent) this.world.getTileEntity(new BlockPos(
-                    this.getPos().getX(),
-                    this.getPos().getY(),
-                    this.getPos().getZ()+i))).setMaster(null);
-            ((TileEntityVCComponent) this.world.getTileEntity(new BlockPos(
-                    this.getPos().getX(),
-                    this.getPos().getY(),
-                    this.getPos().getZ()-i))).setMaster(null);
+            BlockPos yMin = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
+            BlockPos yMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
+
+            TileEntity teMin = this.world.getTileEntity(yMin);
+            TileEntity teMax = this.world.getTileEntity(yMax);
+
+            if (teMin != null)
+            {
+                ((TileEntityVCComponent) teMin).setMaster(null);
+                this.world.setBlockState(yMin, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, false));
+            }
+
+            if (teMax != null)
+            {
+                ((TileEntityVCComponent) teMax).setMaster(null);
+                this.world.setBlockState(yMax, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, false));
+            }
         }
 
         this.farmMachineRadiusX = 0;
@@ -325,7 +356,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         }
     }*/
 
-    /*@Override
+    @Override
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
     }
@@ -336,5 +367,5 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         super.writeToNBT(compound);
 
         return compound;
-    }*/
+    }
 }
