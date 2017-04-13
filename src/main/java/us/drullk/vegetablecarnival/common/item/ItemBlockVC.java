@@ -6,7 +6,6 @@ import net.minecraft.item.ItemBlock;
 public class ItemBlockVC extends ItemBlock {
     public ItemBlockVC(Block block, String name, boolean hasSubs) {
         super(block);
-        this.setRegistryName(name);
         hasSubtypes = hasSubs;
     }
 }

@@ -1,11 +1,13 @@
 package us.drullk.vegetablecarnival;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import us.drullk.vegetablecarnival.common.LibMisc;
@@ -46,8 +48,10 @@ public class VegetableCarnival {
         ItemBlockVC ib_vc_machine = new ItemBlockVC(autoFarmOperator, "vcmachine", false);
         ItemBlockVC ib_vc_cable = new ItemBlockVC(farmCable, "vccable", true);
 
-        GameRegistry.register(ib_vc_machine);
-        GameRegistry.register(ib_vc_cable);
+        register(autoFarmOperator, "vcmachine");
+        register(ib_vc_machine, "vcmachine");
+        register(farmCable, "vccable");
+        register(ib_vc_cable, "vccable");
 
         VCConfig.initProps(event.getModConfigurationDirectory());
 
@@ -67,5 +71,12 @@ public class VegetableCarnival {
     public void postInit(FMLInitializationEvent event)
     {
         proxy.postInit();
+    }
+
+    private static <T extends IForgeRegistryEntry<?>> T register(T thing, String name)
+    {
+        thing.setRegistryName(new ResourceLocation(MOD_ID, name));
+        GameRegistry.register(thing);
+        return thing;
     }
 }
