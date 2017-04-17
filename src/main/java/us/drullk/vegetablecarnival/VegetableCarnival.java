@@ -10,8 +10,8 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import us.drullk.vegetablecarnival.common.LibMisc;
-import us.drullk.vegetablecarnival.common.VCConfig;
+import us.drullk.vegetablecarnival.common.util.LibMisc;
+import us.drullk.vegetablecarnival.common.util.VCConfig;
 import us.drullk.vegetablecarnival.common.block.BlockVCCable;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 import us.drullk.vegetablecarnival.common.item.ItemBlockVC;
@@ -19,9 +19,9 @@ import us.drullk.vegetablecarnival.common.tile.TileEntityVCComponent;
 import us.drullk.vegetablecarnival.common.tile.TileEntityVCMachine;
 import us.drullk.vegetablecarnival.proxy.CommonProxy;
 
-import static us.drullk.vegetablecarnival.common.LibMisc.CLIENT_PROXY;
-import static us.drullk.vegetablecarnival.common.LibMisc.COMMON_PROXY;
-import static us.drullk.vegetablecarnival.common.LibMisc.MOD_ID;
+import static us.drullk.vegetablecarnival.common.util.LibMisc.CLIENT_PROXY;
+import static us.drullk.vegetablecarnival.common.util.LibMisc.COMMON_PROXY;
+import static us.drullk.vegetablecarnival.common.util.LibMisc.MOD_ID;
 
 @Mod(modid = MOD_ID, name = LibMisc.MOD_NAME, dependencies = LibMisc.DEPENDENCIES, version = LibMisc.VERSION)
 public class VegetableCarnival {

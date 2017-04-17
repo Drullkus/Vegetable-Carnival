@@ -12,17 +12,17 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class TileEntityVCComponent extends TileEntity {
-    private TileEntityVCMachine master = null;
+    private BlockPos masterPos = null;
 
     @Nullable
     public TileEntityVCMachine getMaster()
     {
-        return master;
+        return world.getTileEntity(this.masterPos) instanceof TileEntityVCMachine ? (TileEntityVCMachine) this.world.getTileEntity(this.masterPos) : null;
     }
 
-    void setMaster(@Nullable TileEntityVCMachine te)
+    void setMaster(@Nullable BlockPos posOfMaster)
     {
-        this.master = te;
+        this.masterPos = posOfMaster;
     }
 
     @Override
@@ -33,19 +33,20 @@ public class TileEntityVCComponent extends TileEntity {
 
         if (posArray.length == 3)
         {
-            TileEntity te = world.getTileEntity(new BlockPos(posArray[0], posArray[1], posArray[2]));
+            this.masterPos = new BlockPos(posArray[0], posArray[1], posArray[2]);
+
+            TileEntity te = this.world.getTileEntity(this.masterPos);
 
             if(te instanceof TileEntityVCMachine)
             {
-                master = ((TileEntityVCMachine) te);
-
-                world.setBlockState(pos, world.getBlockState(pos).withProperty(BlockVCCable.VALIDATION, true));
+                this.world.setBlockState(this.pos, this.world.getBlockState(this.pos).withProperty(BlockVCCable.VALIDATION, true));
 
                 return;
             }
         }
 
-        world.setBlockState(pos, world.getBlockState(pos).withProperty(BlockVCCable.VALIDATION, false));
+        this.masterPos = null;
+        this.world.setBlockState(this.pos, this.world.getBlockState(this.pos).withProperty(BlockVCCable.VALIDATION, false));
     }
 
     @Override
@@ -53,9 +54,9 @@ public class TileEntityVCComponent extends TileEntity {
     {
         super.writeToNBT(compound);
 
-        if (master != null)
+        if (masterPos != null)
         {
-            int[] posArray = { master.getPos().getX(), master.getPos().getY(), master.getPos().getZ() };
+            int[] posArray = { masterPos.getX(), masterPos.getY(), masterPos.getZ() };
 
             compound.setIntArray("masterpos", posArray);
         }

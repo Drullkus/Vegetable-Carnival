@@ -46,6 +46,9 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         {
             if(!this.valid)
             {
+                this.farmMachineRadiusX = 0;
+                this.farmMachineRadiusY = 0;
+
                 this.validateFarm();
             }
             else
@@ -79,7 +82,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
     private void validateFarm()
     {
-        System.out.println("Attempting to Validate");
+        //System.out.println("Attempting to Validate");
 
         BlockPos[] xMin = new BlockPos[this.maxMachineSize];
         BlockPos[] xMax = new BlockPos[this.maxMachineSize];
@@ -155,18 +158,20 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             for (int i = 1; i <= this.farmMachineRadiusX; i++)
             {
                 //System.out.println(xMin[i-1]);
-                ((TileEntityVCComponent) this.world.getTileEntity(xMin[i-1])).setMaster(this);
-                ((TileEntityVCComponent) this.world.getTileEntity(xMax[i-1])).setMaster(this);
                 this.world.setBlockState(xMin[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, true));
                 this.world.setBlockState(xMax[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, true));
+
+                ((TileEntityVCComponent) this.world.getTileEntity(xMin[i-1])).setMaster(this.pos);
+                ((TileEntityVCComponent) this.world.getTileEntity(xMax[i-1])).setMaster(this.pos);
             }
 
             for (int i = 1; i <= this.farmMachineRadiusY; i++)
             {
-                ((TileEntityVCComponent) this.world.getTileEntity(yMin[i-1])).setMaster(this);
-                ((TileEntityVCComponent) this.world.getTileEntity(yMax[i-1])).setMaster(this);
                 this.world.setBlockState(yMin[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, true));
                 this.world.setBlockState(yMax[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, true));
+
+                ((TileEntityVCComponent) this.world.getTileEntity(yMin[i-1])).setMaster(this.pos);
+                ((TileEntityVCComponent) this.world.getTileEntity(yMax[i-1])).setMaster(this.pos);
             }
         }
         else
@@ -183,18 +188,18 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         for (int i = 1; i <= this.farmMachineRadiusX; i++)
         {
             BlockPos xMin = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
-            BlockPos xMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
-
             TileEntity teMin = this.world.getTileEntity(xMin);
-            TileEntity teMax = this.world.getTileEntity(xMin);
 
-            if (teMin != null)
+            if (world.getBlockState(xMin).getBlock() != VegetableCarnival.farmCable && teMin != null)
             {
                 ((TileEntityVCComponent) teMin).setMaster(null);
                 this.world.setBlockState(xMin, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, false));
             }
 
-            if (teMax != null)
+            BlockPos xMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
+            TileEntity teMax = this.world.getTileEntity(xMax);
+
+            if (world.getBlockState(xMax).getBlock() != VegetableCarnival.farmCable && teMax != null)
             {
                 ((TileEntityVCComponent) teMax).setMaster(null);
                 this.world.setBlockState(xMax, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, false));
@@ -204,18 +209,18 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         for (int i = 1; i <= this.farmMachineRadiusY; i++)
         {
             BlockPos yMin = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
-            BlockPos yMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
-
             TileEntity teMin = this.world.getTileEntity(yMin);
-            TileEntity teMax = this.world.getTileEntity(yMax);
 
-            if (teMin != null)
+            if (world.getBlockState(yMin).getBlock() != VegetableCarnival.farmCable && teMin != null)
             {
                 ((TileEntityVCComponent) teMin).setMaster(null);
                 this.world.setBlockState(yMin, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, false));
             }
 
-            if (teMax != null)
+            BlockPos yMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
+            TileEntity teMax = this.world.getTileEntity(yMax);
+
+            if (world.getBlockState(yMax).getBlock() != VegetableCarnival.farmCable && teMax != null)
             {
                 ((TileEntityVCComponent) teMax).setMaster(null);
                 this.world.setBlockState(yMax, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, false));
@@ -225,7 +230,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         this.farmMachineRadiusX = 0;
         this.farmMachineRadiusY = 0;
 
-        //System.out.println("invalidated");
+        System.out.println("machine invalidated");
     }
 
     private void doOperation(int posX, int posY)

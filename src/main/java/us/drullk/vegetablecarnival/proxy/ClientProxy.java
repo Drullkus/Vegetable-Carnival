@@ -43,8 +43,6 @@ public class ClientProxy extends CommonProxy {
             { return new ModelResourceLocation(location, "inventory"); }
         });
 
-        //System.out.println(location);
-
         ModelLoader.registerItemVariants(item, location);
 
         return location;

@@ -57,13 +57,13 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         TileEntity te = worldIn.getTileEntity(pos);
 
-        System.out.println("Invalidating " + te);
+        System.out.println("Invalid? " + (te != null) + " && " + (te instanceof TileEntityVCComponent));
 
         if (te != null && te instanceof TileEntityVCComponent)
         {
             TileEntityVCMachine master = ((TileEntityVCComponent) te).getMaster();
 
-            System.out.println("Invalidating" + (master != null));
+            System.out.println("Invalidating is " + (master != null));
 
             if (master != null)
             {
@@ -74,14 +74,6 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
         super.breakBlock(worldIn, pos, state);
 
         worldIn.removeTileEntity(pos);
-    }
-
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list) {
-        for(int i = 0; i < 6; i++)
-        {
-            list.add(new ItemStack(itemIn, 1, i));
-        }
     }
 
     @Override

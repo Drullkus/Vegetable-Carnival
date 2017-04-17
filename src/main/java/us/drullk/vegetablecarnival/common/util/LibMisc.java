@@ -1,4 +1,4 @@
-package us.drullk.vegetablecarnival.common;
+package us.drullk.vegetablecarnival.common.util;
 
 public class LibMisc
 {
