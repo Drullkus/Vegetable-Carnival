@@ -1,6 +1,7 @@
 package us.drullk.vegetablecarnival.common.tile;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -31,11 +32,16 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     private int totalY;
 
     private int farmMachineRadiusX = 0;
-    private int farmMachineRadiusY = 0;
+    private int farmMachineRadiusZ = 0;
 
     private boolean valid = false;
 
     private final int maxMachineSize = 3;
+
+    public boolean isFarmValidated()
+    {
+        return valid;
+    }
 
     @Override
     public void update()
@@ -46,10 +52,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         {
             if(!this.valid)
             {
-                this.farmMachineRadiusX = 0;
-                this.farmMachineRadiusY = 0;
-
-                this.validateFarm();
+                //this.validateFarm();
             }
             else
             {
@@ -80,37 +83,54 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         }
     }
 
-    private void validateFarm()
-    {
-        //System.out.println("Attempting to Validate");
+    public void validateFarm() {
+        this.invalidateFarm();
 
-        BlockPos[] xMin = new BlockPos[this.maxMachineSize];
-        BlockPos[] xMax = new BlockPos[this.maxMachineSize];
-        BlockPos[] yMin = new BlockPos[this.maxMachineSize];
-        BlockPos[] yMax = new BlockPos[this.maxMachineSize];
+        this.valid = false;
+        farmMachineRadiusX = 0;
+        farmMachineRadiusZ = 0;
 
-        for(int i = 1; i <= this.maxMachineSize; i++)
+        IBlockState conduitXOff = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
+                .withProperty(BlockVCCable.VALIDATION, false);
+        IBlockState conduitZOff = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z)
+                .withProperty(BlockVCCable.VALIDATION, false);
+
+        IBlockState conduitXOn = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
+                .withProperty(BlockVCCable.VALIDATION, true);
+        IBlockState conduitZOn = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z)
+                .withProperty(BlockVCCable.VALIDATION, true);
+
+        // X -West +East
+
+        for (int i = 1; i < this.maxMachineSize + 1; i++)
         {
-            xMin[i-1] = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
-            xMax[i-1] = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
+            // generate positions
 
-            TileEntity xMinTE = null;
-            TileEntity xMaxTE = null;
+            BlockPos posMin = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
+            BlockPos posMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
 
-            if(this.world.getBlockState(xMin[i-1]) == VegetableCarnival.farmCable.getDefaultState()
-                    .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
-                    .withProperty(BlockVCCable.VALIDATION, false) &&
-                    this.world.getBlockState(xMax[i-1]) == VegetableCarnival.farmCable.getDefaultState()
-                            .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
-                            .withProperty(BlockVCCable.VALIDATION, false))
-            {
-                xMinTE = this.world.getTileEntity(xMin[i-1]);
-                xMaxTE = this.world.getTileEntity(xMax[i-1]);
-            }
+            // get IBlockStates
 
-            if(xMinTE != null && xMaxTE != null &&
-                    this.world.getTileEntity(xMin[i-1]) instanceof TileEntityVCComponent &&
-                    this.world.getTileEntity(xMax[i-1]) instanceof TileEntityVCComponent)
+            IBlockState blockStateMin = this.getWorld().getBlockState(posMin);
+            IBlockState blockStateMax = this.getWorld().getBlockState(posMax);
+
+            // get TEs
+
+            TileEntity tileMin = this.getWorld().getTileEntity(posMin);
+            TileEntity tileMax = this.getWorld().getTileEntity(posMax);
+
+            // Check Validity
+
+            if(blockStateMin.equals(conduitXOff) && blockStateMax.equals(conduitXOff) &&
+                    tileMin != null && tileMax != null &&
+                    tileMin instanceof TileEntityVCComponent &&
+                    tileMax instanceof TileEntityVCComponent &&
+                    ((TileEntityVCComponent) tileMin).getMaster() == null &&
+                    ((TileEntityVCComponent) tileMax).getMaster() == null)
             {
                 this.farmMachineRadiusX++;
             }
@@ -120,26 +140,42 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             }
         }
 
-        for(int i = 1; i <= this.maxMachineSize; i++)
+        //System.out.println("X: " + farmMachineRadiusX);
+
+        if(farmMachineRadiusX == 0)
         {
-            yMin[i-1] = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
-            yMax[i-1] = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
+            return;
+        }
 
-            TileEntity yMinTE = null;
-            TileEntity yMaxTE = null;
+        // Z -North +South
 
-            if(this.world.getBlockState(yMin[i-1]) == VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z) &&
-                    this.world.getBlockState(yMax[i-1]) == VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z))
+        for (int i = 1; i < this.maxMachineSize + 1; i++)
+        {
+            // generate positions
+
+            BlockPos posMin = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
+            BlockPos posMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
+
+            // get IBlockStates
+
+            IBlockState blockStateMin = this.getWorld().getBlockState(posMin);
+            IBlockState blockStateMax = this.getWorld().getBlockState(posMax);
+
+            // get TEs
+
+            TileEntity tileMin = this.getWorld().getTileEntity(posMin);
+            TileEntity tileMax = this.getWorld().getTileEntity(posMax);
+
+            // Check Validity
+
+            if(blockStateMin.equals(conduitZOff) && blockStateMax.equals(conduitZOff) &&
+                    tileMin != null && tileMax != null &&
+                    tileMin instanceof TileEntityVCComponent &&
+                    tileMax instanceof TileEntityVCComponent &&
+                    ((TileEntityVCComponent) tileMin).getMaster() == null &&
+                    ((TileEntityVCComponent) tileMax).getMaster() == null)
             {
-                yMinTE = this.world.getTileEntity(yMin[i-1]);
-                yMaxTE = this.world.getTileEntity(yMax[i-1]);
-            }
-
-            if(yMinTE != null && yMaxTE != null &&
-                    this.world.getTileEntity(yMin[i-1]) instanceof TileEntityVCComponent &&
-                    this.world.getTileEntity(yMax[i-1]) instanceof TileEntityVCComponent)
-            {
-                this.farmMachineRadiusY++;
+                this.farmMachineRadiusZ++;
             }
             else
             {
@@ -147,99 +183,119 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             }
         }
 
-        this.valid = this.farmMachineRadiusX >= 1 && this.farmMachineRadiusY >= 1;
+        //System.out.println("Z: " + farmMachineRadiusZ);
 
-        //System.out.println("Validation " + this.valid);
-
-        if (this.valid)
+        if(farmMachineRadiusZ == 0)
         {
-            //System.out.println(this.pos);
+            farmMachineRadiusX = 0;
 
-            for (int i = 1; i <= this.farmMachineRadiusX; i++)
+            return;
+        }
+
+        if(farmMachineRadiusX > 0 && farmMachineRadiusZ > 0)
+        {
+            for(int i = 1; i <= farmMachineRadiusX; i++)
             {
-                //System.out.println(xMin[i-1]);
-                this.world.setBlockState(xMin[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, true));
-                this.world.setBlockState(xMax[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, true));
+                // generate positions
 
-                ((TileEntityVCComponent) this.world.getTileEntity(xMin[i-1])).setMaster(this.pos);
-                ((TileEntityVCComponent) this.world.getTileEntity(xMax[i-1])).setMaster(this.pos);
+                BlockPos posMin = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
+                BlockPos posMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
+
+                this.getWorld().setBlockState(posMin, conduitXOn);
+                this.getWorld().setBlockState(posMax, conduitXOn);
+
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMin)).setMasterPos(this.getPos());
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMax)).setMasterPos(this.getPos());
             }
 
-            for (int i = 1; i <= this.farmMachineRadiusY; i++)
+            for(int i = 1; i <= farmMachineRadiusZ; i++)
             {
-                this.world.setBlockState(yMin[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, true));
-                this.world.setBlockState(yMax[i-1], VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, true));
+                // generate positions
 
-                ((TileEntityVCComponent) this.world.getTileEntity(yMin[i-1])).setMaster(this.pos);
-                ((TileEntityVCComponent) this.world.getTileEntity(yMax[i-1])).setMaster(this.pos);
+                BlockPos posMin = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
+                BlockPos posMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
+
+                this.getWorld().setBlockState(posMin, conduitZOn);
+                this.getWorld().setBlockState(posMax, conduitZOn);
+
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMin)).setMasterPos(this.getPos());
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMax)).setMasterPos(this.getPos());
             }
+
+            this.valid = true;
         }
-        else
-        {
-            this.farmMachineRadiusX = 0;
-            this.farmMachineRadiusY = 0;
-        }
+
+        //System.out.println(valid);
     }
 
-    public void invalidateDependents()
-    {
-        this.valid = false;
+    public void invalidateFarm() {
+        IBlockState conduitXOn = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
+                .withProperty(BlockVCCable.VALIDATION, true);
+        IBlockState conduitZOn = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z)
+                .withProperty(BlockVCCable.VALIDATION, true);
 
-        for (int i = 1; i <= this.farmMachineRadiusX; i++)
+        IBlockState conduitXOff = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X)
+                .withProperty(BlockVCCable.VALIDATION, false);
+        IBlockState conduitZOff = VegetableCarnival.farmCable.getDefaultState()
+                .withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z)
+                .withProperty(BlockVCCable.VALIDATION, false);
+
+        for(int i = 1; i <= farmMachineRadiusX; i++)
         {
-            BlockPos xMin = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
-            TileEntity teMin = this.world.getTileEntity(xMin);
+            // generate positions
 
-            if (world.getBlockState(xMin).getBlock() != VegetableCarnival.farmCable && teMin != null)
+            BlockPos posMin = new BlockPos(this.getPos().getX()-i, this.getPos().getY(), this.getPos().getZ());
+            BlockPos posMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
+
+            if(this.getWorld().getBlockState(posMin) == conduitXOn)
             {
-                ((TileEntityVCComponent) teMin).setMaster(null);
-                this.world.setBlockState(xMin, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, false));
+                this.getWorld().setBlockState(posMin, conduitXOff);
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMin)).setMasterPos(null);
             }
 
-            BlockPos xMax = new BlockPos(this.getPos().getX()+i, this.getPos().getY(), this.getPos().getZ());
-            TileEntity teMax = this.world.getTileEntity(xMax);
-
-            if (world.getBlockState(xMax).getBlock() != VegetableCarnival.farmCable && teMax != null)
+            if(this.getWorld().getBlockState(posMax) == conduitXOn)
             {
-                ((TileEntityVCComponent) teMax).setMaster(null);
-                this.world.setBlockState(xMax, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.X).withProperty(BlockVCCable.VALIDATION, false));
+                this.getWorld().setBlockState(posMax, conduitXOff);
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMax)).setMasterPos(null);
             }
         }
 
-        for (int i = 1; i <= this.farmMachineRadiusY; i++)
+        for(int i = 1; i <= farmMachineRadiusZ; i++)
         {
-            BlockPos yMin = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
-            TileEntity teMin = this.world.getTileEntity(yMin);
+            // generate positions
 
-            if (world.getBlockState(yMin).getBlock() != VegetableCarnival.farmCable && teMin != null)
+            BlockPos posMin = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()-i);
+            BlockPos posMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
+
+            if(this.getWorld().getBlockState(posMin) == conduitZOn)
             {
-                ((TileEntityVCComponent) teMin).setMaster(null);
-                this.world.setBlockState(yMin, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, false));
+                this.getWorld().setBlockState(posMin, conduitZOff);
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMin)).setMasterPos(null);
             }
 
-            BlockPos yMax = new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()+i);
-            TileEntity teMax = this.world.getTileEntity(yMax);
-
-            if (world.getBlockState(yMax).getBlock() != VegetableCarnival.farmCable && teMax != null)
+            if(this.getWorld().getBlockState(posMax) == conduitZOn)
             {
-                ((TileEntityVCComponent) teMax).setMaster(null);
-                this.world.setBlockState(yMax, VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.AXIS, EnumFacing.Axis.Z).withProperty(BlockVCCable.VALIDATION, false));
+                this.getWorld().setBlockState(posMax, conduitZOff);
+                ((TileEntityVCComponent) this.getWorld().getTileEntity(posMax)).setMasterPos(null);
             }
         }
 
-        this.farmMachineRadiusX = 0;
-        this.farmMachineRadiusY = 0;
-
-        System.out.println("machine invalidated");
+        farmMachineRadiusX = 0;
+        farmMachineRadiusZ = 0;
+        valid = false;
     }
+
 
     private void doOperation(int posX, int posY)
     {
         //begin operation
 
         //check pos
-        if ( posX < -this.farmMachineRadiusX || posY < -this.farmMachineRadiusY ||
-                posX > this.farmMachineRadiusX || posY > this.farmMachineRadiusY )
+        if ( posX < -this.farmMachineRadiusX || posY < -this.farmMachineRadiusZ ||
+                posX > this.farmMachineRadiusX || posY > this.farmMachineRadiusZ)
         {
             //do operation
             if (this.world.getBlockState(new BlockPos(
@@ -364,12 +420,26 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     @Override
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
+
+        valid = compound.getBoolean("operational");
+
+        operatingPos = compound.getInteger("operatingpos");
+
+        farmMachineRadiusX = compound.getInteger("radiusX");
+        farmMachineRadiusZ = compound.getInteger("radiusZ");
     }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
         super.writeToNBT(compound);
+
+        compound.setBoolean("operational", valid);
+
+        compound.setInteger("operatingpos", operatingPos);
+
+        compound.setInteger("radiusX", farmMachineRadiusX);
+        compound.setInteger("radiusZ", farmMachineRadiusZ);
 
         return compound;
     }
