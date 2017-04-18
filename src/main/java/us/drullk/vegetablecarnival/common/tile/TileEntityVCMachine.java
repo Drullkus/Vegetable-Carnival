@@ -1,46 +1,57 @@
 package us.drullk.vegetablecarnival.common.tile;
 
+import com.mojang.authlib.GameProfile;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
 import us.drullk.vegetablecarnival.VegetableCarnival;
 import us.drullk.vegetablecarnival.common.block.BlockVCCable;
+import us.drullk.vegetablecarnival.api.FarmCursor;
+import us.drullk.vegetablecarnival.api.IFarmOperator;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.UUID;
+
+import static us.drullk.vegetablecarnival.common.util.VCConfig.maximumRadius;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class TileEntityVCMachine extends TileEntity implements ITickable {
+    //private static final String FAKE_PLAYER_NAME = "[VEGETABLE_MAN]";
+    //private static final UUID FAKE_PLAYER_UUID = new UUID(0x98207c63a54c4f1dL, 0x965f71e7a5f7f1aaL);
 
-    public TileEntityVCMachine() {
-
-    }
+    //private final FakePlayer vegetableCarnivalFakePlayer = FakePlayerFactory.get((WorldServer) this.getWorld(), new GameProfile(FAKE_PLAYER_UUID, FAKE_PLAYER_NAME));
 
     private final int operationsPerTick = 2;
 
-    private final int radiusX = 10;
-    private final int radiusY = 10;
+    private int radiusX = 10;
+    private int radiusY = 10;
 
     private int operatingPos = 0;
-
-    private int totalX;
-    private int totalY;
 
     private int farmMachineRadiusX = 0;
     private int farmMachineRadiusZ = 0;
 
     private boolean valid = false;
 
-    private final int maxMachineSize = 3;
+    private final int maxMachineSize = maximumRadius;
 
     public boolean isFarmValidated()
     {
         return valid;
+    }
+
+    public FakePlayer getFakePlayer()
+    {
+        return FakePlayerFactory.getMinecraft((WorldServer) world);
     }
 
     @Override
@@ -58,18 +69,18 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             {
                 //System.out.println("OPERATING");
 
-                this.totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
-                this.totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
+                int totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
+                int totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
 
                 for (int i = 0; i < this.operationsPerTick; i++)
                 {
-                    if(this.operatingPos >= this.totalX * this.totalY)
+                    if(this.operatingPos >= totalX * totalY)
                     {
                         this.operatingPos = 0;
                     }
 
-                    int operatingPosX = (this.operatingPos%this.totalX)-this.radiusX;
-                    int operatingPosY = ((this.operatingPos-(this.operatingPos%this.totalY))/this.totalY)-this.radiusY;
+                    int operatingPosX = (this.operatingPos% totalX)-this.radiusX;
+                    int operatingPosY = ((this.operatingPos-(this.operatingPos% totalY))/ totalY)-this.radiusY;
 
                     // begin zoning
 
@@ -106,7 +117,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         // X -West +East
 
-        for (int i = 1; i < this.maxMachineSize + 1; i++)
+        for (int i = 1; i <= this.maxMachineSize; i++)
         {
             // generate positions
 
@@ -149,7 +160,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         // Z -North +South
 
-        for (int i = 1; i < this.maxMachineSize + 1; i++)
+        for (int i = 1; i <= this.maxMachineSize; i++)
         {
             // generate positions
 
@@ -223,6 +234,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             }
 
             this.valid = true;
+            this.radiusX = (farmMachineRadiusX * 2) + (farmMachineRadiusX^2);
+            this.radiusY = (farmMachineRadiusZ * 2) + (farmMachineRadiusZ^2);
         }
 
         //System.out.println(valid);
@@ -294,22 +307,35 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         //begin operation
 
         //check pos
-        if ( posX < -this.farmMachineRadiusX || posY < -this.farmMachineRadiusZ ||
-                posX > this.farmMachineRadiusX || posY > this.farmMachineRadiusZ)
+        if ( this.getPos().getY() < 254 && ( posX < -this.farmMachineRadiusX || posY < -this.farmMachineRadiusZ ||
+                posX > this.farmMachineRadiusX || posY > this.farmMachineRadiusZ ))
         {
-            //do operation
-            if (this.world.getBlockState(new BlockPos(
-                    this.getPos().getX()+posX,
-                    this.getPos().getY(),
-                    this.getPos().getZ()+posY))
-                    == Blocks.STONEBRICK.getDefaultState())
+            FarmCursor farmCursor = new FarmCursor(new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posY), this.getWorld(), null, 0);
+
+            int limit = 20;
+
+            for(int i = 0; i < limit && this.getPos().getY() - i >= 0 && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++)
             {
-                this.world.setBlockState(new BlockPos(
-                        this.getPos().getX()+posX,
-                        this.getPos().getY()+1,
-                        this.getPos().getZ()+posY),
-                        Blocks.DIRT.getDefaultState());
+                //System.out.println("operating at " + new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posY));
+
+                BlockPos keyPos = new BlockPos(this.getPos().getX() + posX, this.getPos().getY() - i, this.getPos().getZ() + posY);
+
+                IBlockState keyState = this.getWorld().getBlockState(keyPos);
+
+                IFarmOperator operator = VegetableCarnival.getOperation(keyState);
+
+                if(operator != null)
+                {
+                    farmCursor = operator.doOperation(farmCursor, this, keyPos);
+
+                    i += farmCursor.getBlocksToSkip();
+                    limit += farmCursor.getBlocksToSkip();
+                }
             }
+        }
+        else
+        {
+            //System.out.println("pos at " + new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posY) + " is not workable");
         }
 
         this.operatingPos++;
@@ -319,103 +345,6 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     {
         return (radius*2)+1;
     }
-
-    /*private void checkZoning(int posX, int posY, int height)
-    {
-        if (!(posX >= farmOperationZoneXMin && posY >= farmOperationZoneYMin &&
-                posX <= farmOperationZoneXMax && posY <= farmOperationZoneYMax))
-        {
-            int tempXmin = -1;
-            int tempYmin = -1;
-            int tempXmax = -1;
-            int tempYmax = -1;
-
-            if (this.world.getBlockState(new BlockPos(
-                    this.getPos().getX()+posX-radiusX-1,
-                    this.getPos().getY()+height,
-                    this.getPos().getZ()+posY-radiusY-1))
-                    == Blocks.REDSTONE_BLOCK.getDefaultState())
-            {
-                    this.world.setBlockState((new BlockPos(
-                            this.getPos().getX()+posX-radiusX-1,
-                            this.getPos().getY()+10,
-                            this.getPos().getZ()+posY-radiusY-1)), Blocks.LAPIS_BLOCK.getDefaultState());
-
-                tempXmin = posX;
-                tempYmin = posY;
-
-                for (int xs = posX+1; xs < totalX; xs++)
-                {
-                    if (this.world.getBlockState(new BlockPos(
-                            this.getPos().getX()+xs-radiusX-1,
-                            this.getPos().getY()+height,
-                            this.getPos().getZ()+posY-radiusY-1))
-                            == Blocks.REDSTONE_BLOCK.getDefaultState())
-                    {
-                        tempXmax = xs;
-                            this.world.setBlockState((new BlockPos(
-                                    this.getPos().getX()+xs-radiusX-1,
-                                    this.getPos().getY()+10,
-                                    this.getPos().getZ()+posY-radiusY-1)), Blocks.BRICK_BLOCK.getDefaultState());
-                        break;
-                    }
-                    else
-                    {
-                        tempXmax = -1;
-                    }
-                }
-
-                if(tempXmax >= 0)
-                {
-                    for (int ys = posY+1; ys < totalY; ys++)
-                    {
-                        if (this.world.getBlockState(new BlockPos(
-                                this.getPos().getX()+posX-radiusX-1,
-                                this.getPos().getY()+height,
-                                this.getPos().getZ()+ys-radiusY-1))
-                                == Blocks.REDSTONE_BLOCK.getDefaultState())
-                        {
-                                this.world.setBlockState((new BlockPos(
-                                        this.getPos().getX()+posX-radiusX-1,
-                                        this.getPos().getY()+10,
-                                        this.getPos().getZ()+ys-radiusY-1)), Blocks.CLAY.getDefaultState());
-
-                            if (this.world.getBlockState(new BlockPos(
-                                    this.getPos().getX()+farmOperationZoneXMax-radiusX-1,
-                                    this.getPos().getY()+height,
-                                    this.getPos().getZ()+ys-radiusY-1))
-                                    == Blocks.REDSTONE_BLOCK.getDefaultState())
-                            {
-                                tempYmax = ys;
-
-                                farmOperationZoneXMin = tempXmin;
-                                farmOperationZoneXMax = tempYmax;
-                                farmOperationZoneYMin = tempYmin;
-                                farmOperationZoneYMax = tempYmax;
-
-                                this.world.setBlockState((new BlockPos(
-                                        this.getPos().getX()+farmOperationZoneXMax-radiusX-1,
-                                        this.getPos().getY()+10,
-                                        this.getPos().getZ()+ys-radiusY-1)), Blocks.MAGMA.getDefaultState());
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            tempYmax = -1;
-                        }
-                    }
-                }
-                else
-                {
-                    farmOperationZoneXMin = -1;
-                    farmOperationZoneXMax = -1;
-                    farmOperationZoneYMin = -1;
-                    farmOperationZoneYMax = -1;
-                }
-            }
-        }
-    }*/
 
     @Override
     public void readFromNBT(NBTTagCompound compound) {

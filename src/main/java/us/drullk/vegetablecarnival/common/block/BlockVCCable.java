@@ -51,13 +51,13 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         TileEntity te = worldIn.getTileEntity(pos);
 
-        System.out.println("Invalid? " + (te != null) + " && " + (te instanceof TileEntityVCComponent));
+        //System.out.println("Invalid? " + (te != null) + " && " + (te instanceof TileEntityVCComponent));
 
         if (te != null && te instanceof TileEntityVCComponent)
         {
             TileEntityVCMachine master = ((TileEntityVCComponent) te).getMaster();
 
-            System.out.println("Invalidating is " + (master != null));
+            //System.out.println("Invalidating is " + (master != null));
 
             if (master != null && master.isFarmValidated())
             {
