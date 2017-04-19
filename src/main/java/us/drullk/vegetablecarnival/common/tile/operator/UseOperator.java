@@ -1,17 +1,27 @@
 package us.drullk.vegetablecarnival.common.tile.operator;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCommandBlock;
+import net.minecraft.block.BlockStructure;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
 import us.drullk.vegetablecarnival.common.tile.TileEntityVCMachine;
+import us.drullk.vegetablecarnival.common.util.Common;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -30,7 +40,55 @@ public class UseOperator implements IFarmOperator
         {
             IInventory inventoryTE = (IInventory) te;
 
-            for(int i = 0; i < inventoryTE.getSizeInventory(); i++)
+            World thisWorld = cursor.getWorld();
+            BlockPos thisPos = cursor.getPos();
+            IBlockState thisState = thisWorld.getBlockState(thisPos);
+            FakePlayer vegetableMan = machine.getFakePlayer();
+
+            Common.unpack(vegetableMan, inventoryTE);
+
+            ItemStack stackHeld = vegetableMan.getHeldItemMainhand();
+
+            PlayerInteractEvent.RightClickBlock rightClickEvent = ForgeHooks.onRightClickBlock(vegetableMan, vegetableMan.getActiveHand(), stackHeld, thisPos, EnumFacing.UP, ForgeHooks.rayTraceEyeHitVec(vegetableMan, 1.0D));
+
+            if(!rightClickEvent.isCanceled())
+            {
+                Item item = Common.isStackNull(stackHeld)?null:stackHeld.getItem();
+
+                EnumActionResult useFirstResult = item == null?EnumActionResult.PASS:item.onItemUseFirst(stackHeld, vegetableMan, thisWorld, thisPos, EnumFacing.UP, 0.5f, 0.5f, 0.5f, vegetableMan.getActiveHand());
+
+                if(useFirstResult == EnumActionResult.PASS)
+                {
+                    boolean bypass = true;
+                    ItemStack[] heldItems = new ItemStack[]{vegetableMan.getHeldItemMainhand(), vegetableMan.getHeldItemOffhand()};
+
+                    for (ItemStack heldItem : heldItems) {
+                        bypass = bypass && (heldItem == null || heldItem.getItem().doesSneakBypassUse(heldItem, thisWorld, thisPos, vegetableMan));
+                    }
+
+                    EnumActionResult actionResult = EnumActionResult.PASS;
+                    if(!vegetableMan.isSneaking() || bypass || rightClickEvent.getUseBlock() == Event.Result.ALLOW) {
+                        if(rightClickEvent.getUseBlock() != Event.Result.DENY && thisState.getBlock().onBlockActivated(thisWorld, thisPos, thisState, vegetableMan, vegetableMan.getActiveHand(), stackHeld, EnumFacing.UP, 0.5f, 0.5f, 0.5f))
+                        {
+                            actionResult = EnumActionResult.SUCCESS;
+                        }
+                    }
+
+                    if(!Common.isStackNull(stackHeld)) {
+                        if(!((actionResult == EnumActionResult.SUCCESS || rightClickEvent.getUseItem() == Event.Result.DENY) && (actionResult != EnumActionResult.SUCCESS || rightClickEvent.getUseItem() != Event.Result.ALLOW))) {
+                            stackHeld.onItemUse(vegetableMan, thisWorld, thisPos, vegetableMan.getActiveHand(), EnumFacing.UP, 0.5f, 0.5f, 0.5f);
+                        }
+                    }
+                }
+            }
+
+            //if(!Common.isStackNull(stackHeld) && !thisState.getBlock().onBlockActivated(thisWorld, thisPos, thisState, vegetableMan, vegetableMan.getActiveHand(), stackHeld, EnumFacing.UP, 0.5f, 0.5f, 0.5f)) {
+            //    stackHeld.getItem().onItemUse(stackHeld, vegetableMan, thisWorld, thisPos, vegetableMan.getActiveHand(), EnumFacing.UP, 0.5f, 0.5f, 0.5f);
+            //}
+
+            Common.repack(vegetableMan, inventoryTE, cursor);
+
+            /*for(int i = 0; i < inventoryTE.getSizeInventory(); i++)
             {
                 ItemStack stackCheck = inventoryTE.getStackInSlot(i);
 
@@ -67,15 +125,15 @@ public class UseOperator implements IFarmOperator
 
                         inventoryTE.setInventorySlotContents(i, stack);
 
-                        /*if()
-                        {
-                            cursor.getWorld().spawnEntityInWorld(new EntityItem(cursor.getWorld(), 0.5, 0.5, 0.5, stack));
-                        }*/
+                        //if()
+                        //{
+                        //    cursor.getWorld().spawnEntityInWorld(new EntityItem(cursor.getWorld(), 0.5, 0.5, 0.5, stack));
+                        //}
 
                         return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1);
                     }
                 }
-            }
+            }*/
         }
 
         return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1);

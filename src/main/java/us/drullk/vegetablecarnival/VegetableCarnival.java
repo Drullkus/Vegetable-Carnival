@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
+import us.drullk.vegetablecarnival.common.tile.operator.BreakOperator;
 import us.drullk.vegetablecarnival.common.tile.operator.HeightOperator;
 import us.drullk.vegetablecarnival.common.tile.operator.StopOperator;
 import us.drullk.vegetablecarnival.common.tile.operator.UseOperator;
@@ -80,6 +81,8 @@ public class VegetableCarnival {
         mainOperators.put(Blocks.NETHER_BRICK.getDefaultState(), new StopOperator());
 
         mainOperators.put(Blocks.LAPIS_BLOCK.getDefaultState(), new UseOperator());
+
+        mainOperators.put(Blocks.QUARTZ_BLOCK.getDefaultState(), new BreakOperator());
     }
 
     @Mod.EventHandler
