@@ -13,10 +13,7 @@ import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
-import us.drullk.vegetablecarnival.common.tile.operator.BreakOperator;
-import us.drullk.vegetablecarnival.common.tile.operator.HeightOperator;
-import us.drullk.vegetablecarnival.common.tile.operator.StopOperator;
-import us.drullk.vegetablecarnival.common.tile.operator.UseOperator;
+import us.drullk.vegetablecarnival.common.tile.operator.*;
 import us.drullk.vegetablecarnival.common.util.LibMisc;
 import us.drullk.vegetablecarnival.common.util.VCConfig;
 import us.drullk.vegetablecarnival.common.block.BlockVCCable;
@@ -78,11 +75,14 @@ public class VegetableCarnival {
         mainOperators.put(Blocks.EMERALD_BLOCK.getDefaultState(), new HeightOperator(new int[]{0, 1, 0}));
         mainOperators.put(Blocks.DIAMOND_BLOCK.getDefaultState(), new HeightOperator(new int[]{0, -1, 0}));
 
-        mainOperators.put(Blocks.NETHER_BRICK.getDefaultState(), new StopOperator());
+        mainOperators.put(Blocks.BEDROCK.getDefaultState(), new StopOperator());
+        mainOperators.put(Blocks.OBSIDIAN.getDefaultState(), new StopOperator());
 
         mainOperators.put(Blocks.LAPIS_BLOCK.getDefaultState(), new UseOperator());
 
         mainOperators.put(Blocks.QUARTZ_BLOCK.getDefaultState(), new BreakOperator());
+
+        mainOperators.put(Blocks.NETHER_BRICK.getDefaultState(), new ClickOperator());
     }
 
     @Mod.EventHandler
