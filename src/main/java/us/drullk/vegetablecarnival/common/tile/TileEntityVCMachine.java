@@ -1,9 +1,7 @@
 package us.drullk.vegetablecarnival.common.tile;
 
-import com.mojang.authlib.GameProfile;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -18,7 +16,6 @@ import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.UUID;
 
 import static us.drullk.vegetablecarnival.common.util.VCConfig.maximumRadius;
 
@@ -30,10 +27,10 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
     //private final FakePlayer vegetableCarnivalFakePlayer = FakePlayerFactory.get((WorldServer) this.getWorld(), new GameProfile(FAKE_PLAYER_UUID, FAKE_PLAYER_NAME));
 
-    private final int operationsPerTick = 2;
+    private int operationsPerTick = 0;
 
     private int radiusX = 10;
-    private int radiusY = 10;
+    private int radiusZ = 10;
 
     private int operatingPos = 0;
 
@@ -70,25 +67,25 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                 //System.out.println("OPERATING");
 
                 int totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
-                int totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
+                int totalZ = getDiameterFromRadiusPlusCenter(this.radiusZ);
 
                 for (int i = 0; i < this.operationsPerTick; i++)
                 {
-                    if(this.operatingPos >= totalX * totalY)
+                    if(this.operatingPos >= totalX * totalZ)
                     {
                         this.operatingPos = 0;
                     }
 
                     int operatingPosX = (this.operatingPos% totalX)-this.radiusX;
-                    int operatingPosY = ((this.operatingPos-(this.operatingPos% totalY))/ totalY)-this.radiusY;
+                    int operatingPosZ = ((this.operatingPos-(this.operatingPos% totalZ))/ totalZ)-this.radiusZ;
 
                     // begin zoning
 
-                    //checkZoning(operatingPosX, operatingPosY, 0);
+                    //checkZoning(operatingPosX, operatingPosZ, 0);
 
                     // end zoning
 
-                    this.doOperation(operatingPosX, operatingPosY);
+                    this.doOperation(operatingPosX, operatingPosZ);
                 }
             }
         }
@@ -234,8 +231,9 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
             }
 
             this.valid = true;
+            operationsPerTick = farmMachineRadiusX > farmMachineRadiusZ ? farmMachineRadiusX : farmMachineRadiusZ;
             this.radiusX = (farmMachineRadiusX * 2) + (farmMachineRadiusX^2);
-            this.radiusY = (farmMachineRadiusZ * 2) + (farmMachineRadiusZ^2);
+            this.radiusZ = (farmMachineRadiusZ * 2) + (farmMachineRadiusZ^2);
         }
 
         //System.out.println(valid);
@@ -298,27 +296,26 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         farmMachineRadiusX = 0;
         farmMachineRadiusZ = 0;
+        operationsPerTick = 0;
         valid = false;
     }
 
 
-    private void doOperation(int posX, int posY)
+    private void doOperation(int posX, int posZ)
     {
         //begin operation
 
         //check pos
-        if ( this.getPos().getY() < 254 && ( posX < -this.farmMachineRadiusX || posY < -this.farmMachineRadiusZ ||
-                posX > this.farmMachineRadiusX || posY > this.farmMachineRadiusZ ))
+        if ( this.getPos().getY() < 254 && ( posX < -this.farmMachineRadiusX || posZ < -this.farmMachineRadiusZ ||
+                posX > this.farmMachineRadiusX || posZ > this.farmMachineRadiusZ ))
         {
-            FarmCursor farmCursor = new FarmCursor(new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posY), this.getWorld(), null, 0);
+            FarmCursor farmCursor = new FarmCursor(new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posZ), this.getWorld(), null, 0);
 
             int limit = 20;
 
             for(int i = 0; i < limit && this.getPos().getY() - i >= 0 && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++)
             {
-                //System.out.println("operating at " + new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posY));
-
-                BlockPos keyPos = new BlockPos(this.getPos().getX() + posX, this.getPos().getY() - i, this.getPos().getZ() + posY);
+                BlockPos keyPos = new BlockPos(this.getPos().getX() + posX, this.getPos().getY() - i, this.getPos().getZ() + posZ);
 
                 IBlockState keyState = this.getWorld().getBlockState(keyPos);
 
@@ -335,7 +332,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         }
         else
         {
-            //System.out.println("pos at " + new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posY) + " is not workable");
+            //System.out.println("pos at " + new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posZ) + " is not workable");
         }
 
         this.operatingPos++;
@@ -354,6 +351,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         operatingPos = compound.getInteger("operatingpos");
 
+        operationsPerTick = compound.getInteger("operatingcount");
+
         farmMachineRadiusX = compound.getInteger("radiusX");
         farmMachineRadiusZ = compound.getInteger("radiusZ");
     }
@@ -366,6 +365,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         compound.setBoolean("operational", valid);
 
         compound.setInteger("operatingpos", operatingPos);
+
+        compound.setInteger("operatingcount", operationsPerTick);
 
         compound.setInteger("radiusX", farmMachineRadiusX);
         compound.setInteger("radiusZ", farmMachineRadiusZ);

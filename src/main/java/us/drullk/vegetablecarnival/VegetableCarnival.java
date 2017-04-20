@@ -1,6 +1,7 @@
 package us.drullk.vegetablecarnival;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockQuartz;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
@@ -83,6 +84,15 @@ public class VegetableCarnival {
         mainOperators.put(Blocks.QUARTZ_BLOCK.getDefaultState(), new BreakOperator());
 
         mainOperators.put(Blocks.NETHER_BRICK.getDefaultState(), new ClickOperator());
+
+        mainOperators.put(Blocks.COBBLESTONE.getDefaultState(), new TillOperator());
+
+        mainOperators.put(Blocks.QUARTZ_BLOCK.getDefaultState().withProperty(BlockQuartz.VARIANT, BlockQuartz.EnumType.CHISELED), new HarvestOperator());
+
+        mainOperators.put(Blocks.WOOL.getStateFromMeta(0), new SkipOperator(1));
+        mainOperators.put(Blocks.WOOL.getStateFromMeta(1), new SkipOperator(2));
+        mainOperators.put(Blocks.WOOL.getStateFromMeta(2), new SkipOperator(3));
+        mainOperators.put(Blocks.WOOL.getStateFromMeta(3), new SkipOperator(4));
     }
 
     @Mod.EventHandler
