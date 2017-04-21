@@ -1,6 +1,8 @@
 {
-    "parent": "block/cube_all",
+    "parent": "block/cube_bottom_top",
     "textures": {
-        "all": "vegetablecarnival:blocks/core"
+        "bottom": "vegetablecarnival:blocks/controller_bottom_off",
+        "top": "vegetablecarnival:blocks/controller_top",
+        "side": "vegetablecarnival:blocks/core"
     }
 }

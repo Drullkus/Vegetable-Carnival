@@ -33,7 +33,7 @@ import static us.drullk.vegetablecarnival.common.util.LibMisc.MOD_ID;
 
 @Mod(modid = MOD_ID, name = LibMisc.MOD_NAME, dependencies = LibMisc.DEPENDENCIES, version = LibMisc.VERSION)
 public class VegetableCarnival {
-    private static final Logger logger = LogManager.getLogger(MOD_ID);
+    public static final Logger logger = LogManager.getLogger(MOD_ID);
 
     @Mod.Instance(MOD_ID)
     public static VegetableCarnival instance;

@@ -1,5 +1,10 @@
 {
     "variants": {
-        "normal": { "model": "vegetablecarnival:machine" }
+        "facing=up": { "model": "vegetablecarnival:machine" },
+        "facing=down": { "model": "vegetablecarnival:machine", "x": 180 },
+        "facing=east": { "model": "vegetablecarnival:machine", "y": 90, "x": 90 },
+        "facing=south": { "model": "vegetablecarnival:machine", "y": 180, "x": 90 },
+        "facing=west": { "model": "vegetablecarnival:machine", "y": 270, "x": 90 },
+        "facing=north": { "model": "vegetablecarnival:machine", "y": 0, "x": 90 }
     }
 }
