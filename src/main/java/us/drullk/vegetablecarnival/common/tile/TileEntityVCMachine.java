@@ -16,6 +16,7 @@ import us.drullk.vegetablecarnival.common.block.BlockVCCable;
 import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
+import us.drullk.vegetablecarnival.common.util.Common;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -92,20 +93,12 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     public void assembleFarm() {
         dissassembleFarm();
 
-        EnumFacing.Axis[] interceptingAxes = new EnumFacing.Axis[2]; // Axes that intercept Controller's Axis
-        EnumFacing[] interceptingFaces = new EnumFacing[4]; // Faces on above Axes intercepting Controller's Axis
+
+        EnumFacing thisFacing = getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING);
+        EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
+        EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
         IBlockState conduitOff = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, false);
         IBlockState conduitOn = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, true);
-
-        int j = 0;
-        for (EnumFacing.Axis axisCheck : EnumFacing.Axis.values()) // Assign intercepting Axes
-            if (axisCheck != getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING).getAxis()) {
-                interceptingAxes[j & 1] = axisCheck;
-                j++;
-            }
-
-        for (int i = 0; i < interceptingFaces.length; i++) // Assign Faces on Axes intercepting Controller's Axis
-            interceptingFaces[i] = EnumFacing.getFacingFromAxis( EnumFacing.AxisDirection.values()[(i+1) & 1], interceptingAxes[(i / 2) & 1] );
 
         BlockPos masterPos = this.getPos(); // Less getPos() getPos() repetition
         int[] scannedRadii = new int[4];
@@ -149,17 +142,11 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     }
 
     public void dissassembleFarm() {
-        EnumFacing.Axis[] interceptingAxes = new EnumFacing.Axis[2]; // Axes that intercept Controller's Axis
-        EnumFacing[] interceptingFaces = new EnumFacing[4]; // Faces on above Axes intercepting Controller's Axis
+        EnumFacing thisFacing = getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING);
+        EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
+        EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
         IBlockState conduitOff = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, false);
         IBlockState conduitOn = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, true);
-
-        int j = 0;
-        for (EnumFacing.Axis axisCheck : EnumFacing.Axis.values()) // Assign intercepting Axes
-            if (axisCheck != getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING).getAxis()) {
-                interceptingAxes[j & 1] = axisCheck;
-                j++;
-            }
 
         for (int i = 0; i < interceptingFaces.length; i++) // Assign Faces on Axes intercepting Controller's Axis
             interceptingFaces[i] = EnumFacing.getFacingFromAxis( EnumFacing.AxisDirection.values()[(i+1) & 1], interceptingAxes[(i / 2) & 1] );
