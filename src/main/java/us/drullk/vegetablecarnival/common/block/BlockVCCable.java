@@ -31,14 +31,12 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
     }
 
     @Override
-    public int getMetaFromState(IBlockState state)
-    {
+    public int getMetaFromState(IBlockState state) {
         return (state.getValue(AXIS).ordinal() << 1) | (state.getValue(VALIDATION) ? 1 : 0);
     }
 
     @Override
-    public IBlockState getStateFromMeta(int meta)
-    {
+    public IBlockState getStateFromMeta(int meta) {
         return meta < 6 ? this.getDefaultState().withProperty(AXIS, EnumFacing.Axis.values()[meta>>>1]).withProperty(VALIDATION, (meta&1) == 1) : this.getDefaultState();
     }
 
@@ -51,17 +49,11 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         TileEntity te = worldIn.getTileEntity(pos);
 
-        //System.out.println("Invalid? " + (te != null) + " && " + (te instanceof TileEntityVCComponent));
-
-        if (te != null && te instanceof TileEntityVCComponent)
-        {
+        if (te != null && te instanceof TileEntityVCComponent) {
             TileEntityVCMachine master = ((TileEntityVCComponent) te).getMaster();
 
-            //System.out.println("Invalidating is " + (master != null));
-
-            if (master != null && master.isFarmValidated())
-            {
-                master.validateFarm();
+            if (master != null && master.isFarmValidated()) {
+                master.dissassembleFarm();
             }
         }
 

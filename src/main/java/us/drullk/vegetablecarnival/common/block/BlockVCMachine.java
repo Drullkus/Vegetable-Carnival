@@ -34,20 +34,17 @@ public class BlockVCMachine extends BlockDirectional implements ITileEntityProvi
     }
 
     @Override
-    public IBlockState onBlockPlaced(World world, BlockPos pos, EnumFacing facing, float x, float y, float z, int meta, EntityLivingBase placer)
-    {
+    public IBlockState onBlockPlaced(World world, BlockPos pos, EnumFacing facing, float x, float y, float z, int meta, EntityLivingBase placer) {
         return this.getDefaultState().withProperty(FACING, placer.isSneaking() ? facing.getOpposite() : facing);
     }
 
     @Override
-    public IBlockState withRotation(IBlockState state, Rotation rotation)
-    {
+    public IBlockState withRotation(IBlockState state, Rotation rotation) {
         return state.withProperty(FACING, rotation.rotate(state.getValue(FACING)));
     }
 
     @Override
-    public IBlockState withMirror(IBlockState state, Mirror mirror)
-    {
+    public IBlockState withMirror(IBlockState state, Mirror mirror) {
         return state.withProperty(FACING, mirror.mirror(state.getValue(FACING)));
     }
 
@@ -58,8 +55,7 @@ public class BlockVCMachine extends BlockDirectional implements ITileEntityProvi
     }
 
     @Override
-    public IBlockState getStateFromMeta(int meta)
-    {
+    public IBlockState getStateFromMeta(int meta) {
         return this.getDefaultState().withProperty(FACING, EnumFacing.getFront(meta));
     }
 
@@ -70,12 +66,10 @@ public class BlockVCMachine extends BlockDirectional implements ITileEntityProvi
 
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        //System.out.println("breaking block");
-
         TileEntity te = worldIn.getTileEntity(pos);
-        if (te != null && te instanceof TileEntityVCMachine)
-        {
-            ((TileEntityVCMachine) te).invalidateFarm();
+
+        if (te != null && te instanceof TileEntityVCMachine) {
+            ((TileEntityVCMachine) te).dissassembleFarm();
         }
 
         super.breakBlock(worldIn, pos, state);
@@ -85,13 +79,11 @@ public class BlockVCMachine extends BlockDirectional implements ITileEntityProvi
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
-        if (!world.isRemote && heldItem != null && heldItem.getItem() == Items.STONE_HOE)
-        {
+        if (!world.isRemote && heldItem != null && heldItem.getItem() == Items.STONE_HOE) {
             TileEntity te = world.getTileEntity(pos);
-            if (te != null && te instanceof TileEntityVCMachine)
-            {
-                ((TileEntityVCMachine) te).validateFarm();
 
+            if (te != null && te instanceof TileEntityVCMachine) {
+                ((TileEntityVCMachine) te).assembleFarm();
                 return true;
             }
         }
