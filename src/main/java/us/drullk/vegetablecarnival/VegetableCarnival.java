@@ -47,14 +47,12 @@ public class VegetableCarnival {
     private static IdentityHashMap<IBlockState, IFarmOperator> mainOperators = new IdentityHashMap<>();
 
     @Nullable
-    public static IFarmOperator getOperation(IBlockState blockState)
-    {
+    public static IFarmOperator getOperation(IBlockState blockState) {
         return mainOperators.get(blockState);
     }
 
     @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event)
-    {
+    public void preInit(FMLPreInitializationEvent event) {
         autoFarmOperator = new BlockVCMachine();
         farmCable = new BlockVCCable();
 
@@ -96,8 +94,7 @@ public class VegetableCarnival {
     }
 
     @Mod.EventHandler
-    public void init(FMLInitializationEvent event)
-    {
+    public void init(FMLInitializationEvent event) {
         GameRegistry.registerTileEntity(TileEntityVCMachine.class, "vcmachine");
         GameRegistry.registerTileEntity(TileEntityVCComponent.class, "vccable");
 
@@ -105,13 +102,11 @@ public class VegetableCarnival {
     }
 
     @Mod.EventHandler
-    public void postInit(FMLInitializationEvent event)
-    {
+    public void postInit(FMLInitializationEvent event) {
         proxy.postInit();
     }
 
-    private static <T extends IForgeRegistryEntry<?>> T register(T thing, String name)
-    {
+    private static <T extends IForgeRegistryEntry<?>> T register(T thing, String name) {
         thing.setRegistryName(new ResourceLocation(MOD_ID, name));
         GameRegistry.register(thing);
         return thing;

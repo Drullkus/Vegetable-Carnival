@@ -65,17 +65,29 @@ public class BlockVCMachine extends BlockDirectional implements ITileEntityProvi
     }
 
     @Override
-    public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        TileEntity te = worldIn.getTileEntity(pos);
+    public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity tileEntity, @Nullable ItemStack stack) {
+        TileEntity tile = world.getTileEntity(pos);
+
+        if (tile != null && tile instanceof TileEntityVCMachine) {
+            ((TileEntityVCMachine) tile).dissassembleFarm();
+        }
+
+        super.harvestBlock(world, player, pos, state, tileEntity, stack);
+        //world.removeTileEntity(pos);
+    }
+
+    /*@Override
+    public void breakBlock(World world, BlockPos pos, IBlockState state) {
+        TileEntity te = world.getTileEntity(pos);
 
         if (te != null && te instanceof TileEntityVCMachine) {
             ((TileEntityVCMachine) te).dissassembleFarm();
         }
 
-        super.breakBlock(worldIn, pos, state);
+        super.breakBlock(world, pos, state);
 
-        worldIn.removeTileEntity(pos);
-    }
+        world.removeTileEntity(pos);
+    }*/
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {

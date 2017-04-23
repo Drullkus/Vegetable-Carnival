@@ -1,8 +1,9 @@
 package us.drullk.vegetablecarnival.common.tile;
 
 import mcp.MethodsReturnNonnullByDefault;
-import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -13,13 +14,12 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import us.drullk.vegetablecarnival.VegetableCarnival;
 import us.drullk.vegetablecarnival.common.block.BlockVCCable;
-import us.drullk.vegetablecarnival.api.FarmCursor;
-import us.drullk.vegetablecarnival.api.IFarmOperator;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 import us.drullk.vegetablecarnival.common.util.Common;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import static us.drullk.vegetablecarnival.common.util.Common.isCoordInsideNoZone;
 import static us.drullk.vegetablecarnival.common.util.VCConfig.maximumRadius;
 
 @MethodsReturnNonnullByDefault
@@ -37,8 +37,13 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
     private int operatingPos = 0;
 
-    private int farmMachineRadiusX = 0;
-    private int farmMachineRadiusY = 0;
+    private int farmMachineRadiusPrimary = 0;
+    private int farmMachineRadiusSecondary = 0;
+
+    //private EnumFacing.Axis axisPrimary;
+    //private EnumFacing.Axis axisSecondary;
+
+    private EnumFacing thisFacing;
 
     private boolean assembled = false;
 
@@ -54,47 +59,44 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         return FakePlayerFactory.getMinecraft((WorldServer) world);
     }
 
+    private int debug = 0;
+
     @Override
     public void update()
     {
-        //System.out.println("world remoteness is " + !world.isRemote);
+        if(this.getWorld().getBlockState(this.pos).getBlock() == VegetableCarnival.autoFarmOperator && this.assembled && !world.isRemote){
+            int totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
+            int totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
 
-        if(!world.isRemote)
-        {
-            if(this.assembled)
-            {
-                //System.out.println("OPERATING");
+            for (int i = 0; i < this.operationsPerTick; i++) {
+                if (this.operatingPos >= totalX * totalY) this.operatingPos = 0;
 
-                int totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
-                int totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
+                //int operatingPosX = (this.operatingPos % totalX) - this.radiusX;
+                //int operatingPosY = ((this.operatingPos - (this.operatingPos % totalY)) / totalY) - this.radiusY;
 
-                for (int i = 0; i < this.operationsPerTick; i++)
+                int operatingPosX = this.operatingPos % totalX;
+                int operatingPosY = this.operatingPos / totalY;
+
+                if (debug < 10)
                 {
-                    if(this.operatingPos >= totalX * totalY)
-                    {
-                        this.operatingPos = 0;
-                    }
-
-                    int operatingPosX = (this.operatingPos% totalX)-this.radiusX;
-                    int operatingPosY = ((this.operatingPos-(this.operatingPos% totalY))/ totalY)-this.radiusY;
-
-                    // begin zoning
-
-                    //checkZoning(operatingPosX, operatingPosY, 0);
-
-                    // end zoning
-
-                    this.doOperation(operatingPosX, operatingPosY);
+                    System.out.print(operatingPos + ": {" + operatingPosX + ", " + operatingPosY + "}, ");
                 }
+                else
+                {
+                    System.out.println("{" + operatingPosX + ", " + operatingPosY + "}, ");
+                    debug = 0;
+                }
+
+                this.doOperation(operatingPosX, operatingPosY);
             }
         }
     }
 
     public void assembleFarm() {
+        thisFacing = getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING);
+
         dissassembleFarm();
 
-
-        EnumFacing thisFacing = getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING);
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
         EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
         IBlockState conduitOff = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, false);
@@ -133,25 +135,27 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                 ((TileEntityVCComponent) this.getWorld().getTileEntity(posGet)).setMasterPos(masterPos);
             }
 
-        farmMachineRadiusX = scannedRadii[0];
-        farmMachineRadiusY = scannedRadii[2];
+        //this.axisPrimary = interceptingAxes[0];
+        //this.axisSecondary = interceptingAxes[1];
+        this.farmMachineRadiusPrimary = scannedRadii[0];
+        this.farmMachineRadiusSecondary = scannedRadii[2];
+        this.radiusX = (farmMachineRadiusPrimary*2) + (farmMachineRadiusPrimary^2);
+        this.radiusY = (farmMachineRadiusSecondary*2) + (farmMachineRadiusSecondary^2);
         this.assembled = true;
-        operationsPerTick = Math.min(farmMachineRadiusX, farmMachineRadiusY);
-        this.radiusX = (farmMachineRadiusX * 2) + (farmMachineRadiusX^2);
-        this.radiusY = (farmMachineRadiusY * 2) + (farmMachineRadiusY^2);
+        this.operationsPerTick = Math.min(farmMachineRadiusPrimary, farmMachineRadiusSecondary);
     }
 
     public void dissassembleFarm() {
-        EnumFacing thisFacing = getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING);
+        IBlockState thisState = this.getWorld().getBlockState(this.getPos());
+        if(thisState.getMaterial() != Material.AIR && thisState.getBlock() == VegetableCarnival.autoFarmOperator)
+            thisFacing = thisState.getValue(BlockVCMachine.FACING);
+
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
         EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
         IBlockState conduitOff = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, false);
         IBlockState conduitOn = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, true);
 
-        for (int i = 0; i < interceptingFaces.length; i++) // Assign Faces on Axes intercepting Controller's Axis
-            interceptingFaces[i] = EnumFacing.getFacingFromAxis( EnumFacing.AxisDirection.values()[(i+1) & 1], interceptingAxes[(i / 2) & 1] );
-
-        int[] scannedRadii = new int[]{farmMachineRadiusX, farmMachineRadiusX, farmMachineRadiusY, farmMachineRadiusY};
+        int[] scannedRadii = new int[]{farmMachineRadiusPrimary, farmMachineRadiusPrimary, farmMachineRadiusSecondary, farmMachineRadiusSecondary};
         for (int direction = 0; direction < scannedRadii.length; direction++)
             for(int length = 1; length <= scannedRadii[direction]; length++) {
                 BlockPos posGet = this.getPos().offset(interceptingFaces[direction], length);
@@ -162,30 +166,50 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                 }
             }
 
-        farmMachineRadiusX = 0;
-        farmMachineRadiusY = 0;
-        this.assembled = false;
-        operationsPerTick = 0;
+        //this.axisPrimary = null;
+        //this.axisSecondary = null;
+        this.farmMachineRadiusPrimary = 0;
+        this.farmMachineRadiusSecondary = 0;
         this.radiusX = 0;
         this.radiusY = 0;
+        this.assembled = false;
+        this.operationsPerTick = 0;
     }
 
-    private void doOperation(int posX, int posZ)
+    private void doOperation(int posPrimaryOffset, int posSecondaryOffset)
     {
-        //begin operation
+        BlockPos masterPos = this.getPos();
+        EnumFacing.Axis thisAxis = this.getWorld().getBlockState(masterPos).getValue(BlockVCMachine.FACING).getAxis();
+        EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisAxis);
 
-        //check pos
+        if(isCoordInsideNoZone(posPrimaryOffset, posSecondaryOffset, this.farmMachineRadiusPrimary, this.farmMachineRadiusSecondary)) {
+            if(thisAxis == EnumFacing.Axis.Y ||
+                (thisAxis == EnumFacing.Axis.X &&
+                masterPos.getY()+farmMachineRadiusPrimary >= 0 &&
+                masterPos.getY()+farmMachineRadiusPrimary < 256) ||
+                (thisAxis == EnumFacing.Axis.Z &&
+                masterPos.getY()+farmMachineRadiusSecondary >= 0 &&
+                masterPos.getY()+farmMachineRadiusSecondary < 256)
+            ) {
+                this.getWorld().setBlockState(
+                        this.getPos()
+                                .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[0]), posPrimaryOffset)
+                                .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[1]), posSecondaryOffset),
+                        Blocks.DIRT.getDefaultState());
+            } else
+                VegetableCarnival.logger.info("TE at " + masterPos + " on Axis " + thisAxis + " tried to operate out of Y bounds at ? " + (masterPos.getY()+farmMachineRadiusPrimary) + " or " + (masterPos.getY()+farmMachineRadiusSecondary));
+        }
         /* TODO refactor to direction sensitive
-        if ( this.getPos().getY() < 254 && ( posX < -this.farmMachineRadiusX || posZ < -this.farmMachineRadiusY ||
-                posX > this.farmMachineRadiusX || posZ > this.farmMachineRadiusY))
+        if ( this.getPos().getY() < 254 && ( posX < -this.farmMachineRadiusPrimary || posSecondaryOffset < -this.farmMachineRadiusSecondary ||
+                posX > this.farmMachineRadiusPrimary || posSecondaryOffset > this.farmMachineRadiusSecondary))
         {
-            FarmCursor farmCursor = new FarmCursor(new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posZ), this.getWorld(), null, 0);
+            FarmCursor farmCursor = new FarmCursor(new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posSecondaryOffset), this.getWorld(), null, 0);
 
             int limit = 20;
 
             for(int i = 0; i < limit && this.getPos().getY() - i >= 0 && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++)
             {
-                BlockPos keyPos = new BlockPos(this.getPos().getX() + posX, this.getPos().getY() - i, this.getPos().getZ() + posZ);
+                BlockPos keyPos = new BlockPos(this.getPos().getX() + posX, this.getPos().getY() - i, this.getPos().getZ() + posSecondaryOffset);
 
                 IBlockState keyState = this.getWorld().getBlockState(keyPos);
 
@@ -204,7 +228,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         this.operatingPos++;
     }
 
-    private int getDiameterFromRadiusPlusCenter(int radius)
+    private static int getDiameterFromRadiusPlusCenter(int radius)
     {
         return (radius*2)+1;
     }
@@ -213,20 +237,23 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
 
+        //thisFacing = EnumFacing.getFront(compound.getInteger("rotation"));
+
         assembled = compound.getBoolean("operational");
 
         operatingPos = compound.getInteger("operatingpos");
 
         operationsPerTick = compound.getInteger("operatingcount");
 
-        farmMachineRadiusX = compound.getInteger("radiusX");
-        farmMachineRadiusY = compound.getInteger("radiusY");
+        farmMachineRadiusPrimary = compound.getInteger("radiusX");
+        farmMachineRadiusSecondary = compound.getInteger("radiusY");
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound compound)
-    {
+    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         super.writeToNBT(compound);
+
+        //compound.setInteger("rotation", thisFacing.ordinal());
 
         compound.setBoolean("operational", assembled);
 
@@ -234,8 +261,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         compound.setInteger("operatingcount", operationsPerTick);
 
-        compound.setInteger("radiusX", farmMachineRadiusX);
-        compound.setInteger("radiusY", farmMachineRadiusY);
+        compound.setInteger("radiusX", farmMachineRadiusPrimary);
+        compound.setInteger("radiusY", farmMachineRadiusSecondary);
 
         return compound;
     }
