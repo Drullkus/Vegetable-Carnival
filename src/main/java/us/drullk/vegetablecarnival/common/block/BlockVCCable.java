@@ -12,6 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import us.drullk.vegetablecarnival.VegetableCarnival;
 import us.drullk.vegetablecarnival.common.tile.TileEntityVCComponent;
 import us.drullk.vegetablecarnival.common.tile.TileEntityVCMachine;
 
@@ -52,8 +53,10 @@ public class BlockVCCable extends BlockRotatedPillar implements ITileEntityProvi
         if (te != null && te instanceof TileEntityVCComponent) {
             TileEntityVCMachine master = ((TileEntityVCComponent) te).getMaster();
 
-            if (master != null && master.isFarmValidated()) {
-                master.dissassembleFarm();
+            if (master != null) {
+                IBlockState masterState = worldIn.getBlockState(master.getPos());
+
+                if (masterState.getBlock() == VegetableCarnival.autoFarmOperator) master.dissassembleFarm(masterState);
             }
         }
 

@@ -19,6 +19,7 @@ import us.drullk.vegetablecarnival.common.util.Common;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import static us.drullk.vegetablecarnival.common.util.Common.getDiameterFromRadiusPlusCenter;
 import static us.drullk.vegetablecarnival.common.util.Common.isCoordInsideNoZone;
 import static us.drullk.vegetablecarnival.common.util.VCConfig.maximumRadius;
 
@@ -32,8 +33,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
     private int operationsPerTick = 0;
 
-    private int radiusX = 10;
-    private int radiusY = 10;
+    private int radiusX;
+    private int radiusY;
 
     private int operatingPos = 0;
 
@@ -59,43 +60,23 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         return FakePlayerFactory.getMinecraft((WorldServer) world);
     }
 
-    private int debug = 0;
-
     @Override
     public void update()
     {
-        if(this.getWorld().getBlockState(this.pos).getBlock() == VegetableCarnival.autoFarmOperator && this.assembled && !world.isRemote){
-            int totalX = getDiameterFromRadiusPlusCenter(this.radiusX);
-            int totalY = getDiameterFromRadiusPlusCenter(this.radiusY);
-
+        if(this.getWorld().getBlockState(this.pos).getBlock() == VegetableCarnival.autoFarmOperator && this.assembled && !world.isRemote)
             for (int i = 0; i < this.operationsPerTick; i++) {
-                if (this.operatingPos >= totalX * totalY) this.operatingPos = 0;
+                if (this.operatingPos >= getDiameterFromRadiusPlusCenter(this.radiusX) * getDiameterFromRadiusPlusCenter(this.radiusY))
+                    this.operatingPos = 0;
 
-                //int operatingPosX = (this.operatingPos % totalX) - this.radiusX;
-                //int operatingPosY = ((this.operatingPos - (this.operatingPos % totalY)) / totalY) - this.radiusY;
-
-                int operatingPosX = this.operatingPos % totalX;
-                int operatingPosY = this.operatingPos / totalY;
-
-                if (debug < 10)
-                {
-                    System.out.print(operatingPos + ": {" + operatingPosX + ", " + operatingPosY + "}, ");
-                }
-                else
-                {
-                    System.out.println("{" + operatingPosX + ", " + operatingPosY + "}, ");
-                    debug = 0;
-                }
-
-                this.doOperation(operatingPosX, operatingPosY);
+                this.doOperation((this.operatingPos%getDiameterFromRadiusPlusCenter(this.radiusX))-radiusX, (this.operatingPos/getDiameterFromRadiusPlusCenter(this.radiusX))-radiusY);
             }
-        }
     }
 
     public void assembleFarm() {
-        thisFacing = getWorld().getBlockState(this.getPos()).getValue(BlockVCMachine.FACING);
+        IBlockState thisState = getWorld().getBlockState(this.getPos());
+        thisFacing = thisState.getValue(BlockVCMachine.FACING);
 
-        dissassembleFarm();
+        dissassembleFarm(thisState);
 
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
         EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
@@ -139,16 +120,17 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         //this.axisSecondary = interceptingAxes[1];
         this.farmMachineRadiusPrimary = scannedRadii[0];
         this.farmMachineRadiusSecondary = scannedRadii[2];
-        this.radiusX = (farmMachineRadiusPrimary*2) + (farmMachineRadiusPrimary^2);
-        this.radiusY = (farmMachineRadiusSecondary*2) + (farmMachineRadiusSecondary^2);
+        this.radiusX = (farmMachineRadiusPrimary*2) + (farmMachineRadiusPrimary*farmMachineRadiusPrimary);
+        this.radiusY = (farmMachineRadiusSecondary*2) + (farmMachineRadiusSecondary*farmMachineRadiusSecondary);
         this.assembled = true;
         this.operationsPerTick = Math.min(farmMachineRadiusPrimary, farmMachineRadiusSecondary);
     }
 
-    public void dissassembleFarm() {
-        IBlockState thisState = this.getWorld().getBlockState(this.getPos());
-        if(thisState.getMaterial() != Material.AIR && thisState.getBlock() == VegetableCarnival.autoFarmOperator)
-            thisFacing = thisState.getValue(BlockVCMachine.FACING);
+    public void dissassembleFarm(IBlockState state) {
+        if (!isFarmValidated()) return;
+
+        if(state.getMaterial() != Material.AIR && state.getBlock() == VegetableCarnival.autoFarmOperator)
+            thisFacing = state.getValue(BlockVCMachine.FACING);
 
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
         EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
@@ -228,11 +210,6 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         this.operatingPos++;
     }
 
-    private static int getDiameterFromRadiusPlusCenter(int radius)
-    {
-        return (radius*2)+1;
-    }
-
     @Override
     public void readFromNBT(NBTTagCompound compound) {
         super.readFromNBT(compound);
@@ -245,8 +222,11 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         operationsPerTick = compound.getInteger("operatingcount");
 
-        farmMachineRadiusPrimary = compound.getInteger("radiusX");
-        farmMachineRadiusSecondary = compound.getInteger("radiusY");
+        radiusX = compound.getInteger("radiusX");
+        radiusY = compound.getInteger("radiusY");
+
+        farmMachineRadiusPrimary = compound.getInteger("machineRadiusX");
+        farmMachineRadiusSecondary = compound.getInteger("machineRadiusY");
     }
 
     @Override
@@ -261,8 +241,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         compound.setInteger("operatingcount", operationsPerTick);
 
-        compound.setInteger("radiusX", farmMachineRadiusPrimary);
-        compound.setInteger("radiusY", farmMachineRadiusSecondary);
+        compound.setInteger("machineRadiusX", farmMachineRadiusPrimary);
+        compound.setInteger("machineRadiusY", farmMachineRadiusSecondary);
 
         return compound;
     }

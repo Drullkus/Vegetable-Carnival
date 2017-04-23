@@ -11,6 +11,11 @@ import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 import javax.annotation.Nullable;
 
 public class Common {
+    public static int getDiameterFromRadiusPlusCenter(int radius)
+    {
+        return (radius*2)+1;
+    }
+
     public static boolean isCoordInsideNoZone(int posX, int posY, int noX, int noY)
     {
         return posX<-noX||posY<-noY||posX>noX||posY>noY;

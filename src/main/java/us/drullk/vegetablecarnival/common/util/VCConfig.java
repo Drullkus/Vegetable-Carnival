@@ -17,7 +17,7 @@ public class VCConfig {
 
         config.addCustomCategoryComment(CATEGORY_GENERAL, "General options");
 
-        maximumRadius = config.get(CATEGORY_GENERAL, "The Maximum Square Radius of the farm. The controller is excluded.", 5).getInt(5);
+        maximumRadius = config.get(CATEGORY_GENERAL, "The Maximum Square Radius of the farm. The controller is excluded.", 3).getInt(3);
 
         if(maximumRadius < 1)
         {
