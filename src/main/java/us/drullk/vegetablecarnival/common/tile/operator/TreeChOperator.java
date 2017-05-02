@@ -17,11 +17,10 @@ import us.drullk.vegetablecarnival.common.tile.TileEntityVCMachine;
 import us.drullk.vegetablecarnival.common.util.Common;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.List;
 import java.util.Stack;
 
-import static us.drullk.vegetablecarnival.common.util.Common.getInterceptingAxes;
-import static us.drullk.vegetablecarnival.common.util.Common.getInterceptingFaces;
-import static us.drullk.vegetablecarnival.common.util.Common.isLogOrLeaves;
+import static us.drullk.vegetablecarnival.common.util.Common.*;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
@@ -37,7 +36,6 @@ public class TreeChOperator implements IFarmOperator {
         EnumFacing[] interceptingFaces = getInterceptingFaces(getInterceptingAxes(thisFacing.getAxis()));
 
         Stack<BlockPos> treePosStack = new Stack<>();
-        //BlockPos thisPos = null;
 
         treePosStack.add(cursor.getPos());
 
@@ -56,6 +54,8 @@ public class TreeChOperator implements IFarmOperator {
             IBlockState thisState = thisWorld.getBlockState(candidate);
 
             if (isLogOrLeaves(thisState, thisWorld, candidate)) {
+                // -------------
+
                 boolean isHarvestable = thisState.getBlock().canHarvestBlock(thisWorld, candidate, vegetableMan);
 
                 if (!Common.isStackNull(stack)) {
@@ -70,6 +70,12 @@ public class TreeChOperator implements IFarmOperator {
                 if (isHarvestable && isRemovedByPlayer) {
                     thisState.getBlock().harvestBlock(thisWorld, vegetableMan, candidate, thisState, thisWorld.getTileEntity(candidate), duplicateStack);
                 }
+
+                // -------------
+
+                packDrops(vegetableMan, getDrops(thisWorld, candidate), thisWorld, candidate);
+
+                // -------------
 
                 treePosStack.add(candidate.offset(thisFacing));
 

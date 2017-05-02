@@ -6,12 +6,15 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Common {
     public static int getDiameterFromRadiusPlusCenter(int radius)
@@ -84,5 +87,25 @@ public class Common {
 
     public static boolean isLogOrLeaves(IBlockState state, World world, BlockPos pos) {
         return state.getBlock().isWood(world, pos) || state.getBlock().isLeaves(state, world, pos);
+    }
+
+    public static List<ItemStack> getDrops(World thisWorld, BlockPos pos) {
+        List<EntityItem> drops = thisWorld.getEntitiesWithinAABB(EntityItem.class, new AxisAlignedBB(pos));
+        List<ItemStack> stacks = new ArrayList<>();
+
+        for (EntityItem drop : drops) {
+            ItemStack stack = drop.getEntityItem();
+            stacks.add(stack.copy());
+            drop.setDead();
+        }
+
+        return stacks;
+    }
+
+    public static void packDrops(EntityPlayer vegetableMan, List<ItemStack> stacks, World thisWorld, BlockPos thisPos) {
+        for (ItemStack stack : stacks) {
+            if (!vegetableMan.inventory.addItemStackToInventory(stack));
+            thisWorld.spawnEntityInWorld(new EntityItem(thisWorld, 0.5, 0.5, 0.5, stack));
+        }
     }
 }
