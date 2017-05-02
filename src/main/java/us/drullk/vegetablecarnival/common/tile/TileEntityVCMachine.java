@@ -12,7 +12,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
+import org.lwjgl.Sys;
 import us.drullk.vegetablecarnival.VegetableCarnival;
+import us.drullk.vegetablecarnival.api.FarmCursor;
+import us.drullk.vegetablecarnival.api.IFarmOperator;
 import us.drullk.vegetablecarnival.common.block.BlockVCCable;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 import us.drullk.vegetablecarnival.common.util.Common;
@@ -20,7 +23,7 @@ import us.drullk.vegetablecarnival.common.util.Common;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import static us.drullk.vegetablecarnival.common.util.Common.getDiameterFromRadiusPlusCenter;
-import static us.drullk.vegetablecarnival.common.util.Common.isCoordInsideNoZone;
+import static us.drullk.vegetablecarnival.common.util.Common.isCoordOutOfNoZone;
 import static us.drullk.vegetablecarnival.common.util.VCConfig.maximumRadius;
 
 @MethodsReturnNonnullByDefault
@@ -161,51 +164,46 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     private void doOperation(int posPrimaryOffset, int posSecondaryOffset)
     {
         BlockPos masterPos = this.getPos();
-        EnumFacing.Axis thisAxis = this.getWorld().getBlockState(masterPos).getValue(BlockVCMachine.FACING).getAxis();
+        EnumFacing thisFacing = this.getWorld().getBlockState(masterPos).getValue(BlockVCMachine.FACING);
+        EnumFacing.Axis thisAxis = thisFacing.getAxis();
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisAxis);
 
-        if(isCoordInsideNoZone(posPrimaryOffset, posSecondaryOffset, this.farmMachineRadiusPrimary, this.farmMachineRadiusSecondary)) {
+        if(isCoordOutOfNoZone(posPrimaryOffset, posSecondaryOffset, this.farmMachineRadiusPrimary, this.farmMachineRadiusSecondary)) {
             if(thisAxis == EnumFacing.Axis.Y ||
                 (thisAxis == EnumFacing.Axis.X &&
-                masterPos.getY()+farmMachineRadiusPrimary >= 0 &&
-                masterPos.getY()+farmMachineRadiusPrimary < 256) ||
+                masterPos.getY()+posPrimaryOffset >= 0 &&
+                masterPos.getY()+posPrimaryOffset < 256) ||
                 (thisAxis == EnumFacing.Axis.Z &&
-                masterPos.getY()+farmMachineRadiusSecondary >= 0 &&
-                masterPos.getY()+farmMachineRadiusSecondary < 256)
+                masterPos.getY()+posSecondaryOffset >= 0 &&
+                masterPos.getY()+posSecondaryOffset < 256)
             ) {
-                this.getWorld().setBlockState(
-                        this.getPos()
-                                .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[0]), posPrimaryOffset)
-                                .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[1]), posSecondaryOffset),
-                        Blocks.DIRT.getDefaultState());
-            } else
-                VegetableCarnival.logger.info("TE at " + masterPos + " on Axis " + thisAxis + " tried to operate out of Y bounds at ? " + (masterPos.getY()+farmMachineRadiusPrimary) + " or " + (masterPos.getY()+farmMachineRadiusSecondary));
-        }
-        /* TODO refactor to direction sensitive
-        if ( this.getPos().getY() < 254 && ( posX < -this.farmMachineRadiusPrimary || posSecondaryOffset < -this.farmMachineRadiusSecondary ||
-                posX > this.farmMachineRadiusPrimary || posSecondaryOffset > this.farmMachineRadiusSecondary))
-        {
-            FarmCursor farmCursor = new FarmCursor(new BlockPos(this.pos.getX() + posX, this.pos.getY(), this.pos.getZ() + posSecondaryOffset), this.getWorld(), null, 0);
+                BlockPos thisPos = this.getPos()
+                        .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[0]), posPrimaryOffset)
+                        .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[1]), posSecondaryOffset);
 
-            int limit = 20;
+                if (thisPos.getY() < 0 || thisPos.getY() > 255 ) {
+                    System.out.println("SAFEGUARD FAILURE! TE at " + masterPos + " on Axis " + thisAxis + " tried to operate out of Y bounds at " + thisPos);
+                    this.operatingPos++;
+                    return;
+                }
 
-            for(int i = 0; i < limit && this.getPos().getY() - i >= 0 && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++)
-            {
-                BlockPos keyPos = new BlockPos(this.getPos().getX() + posX, this.getPos().getY() - i, this.getPos().getZ() + posSecondaryOffset);
+                FarmCursor farmCursor = new FarmCursor(thisPos, this.getWorld(), null, 0, thisFacing);
 
-                IBlockState keyState = this.getWorld().getBlockState(keyPos);
+                int limit = 20;
+                for(int i = 0; i < limit && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++) {
+                    BlockPos keyPos = thisPos.offset(thisFacing, -1-i-farmCursor.getBlocksToSkip());
+                    IBlockState keyState = this.getWorld().getBlockState(keyPos);
+                    IFarmOperator operator = VegetableCarnival.getOperation(keyState);
 
-                IFarmOperator operator = VegetableCarnival.getOperation(keyState);
+                    if(operator != null) {
+                        farmCursor = operator.doOperation(farmCursor, this, keyPos);
 
-                if(operator != null)
-                {
-                    farmCursor = operator.doOperation(farmCursor, this, keyPos);
-
-                    i += farmCursor.getBlocksToSkip();
-                    limit += farmCursor.getBlocksToSkip();
+                        i += farmCursor.getBlocksToSkip();
+                        limit += farmCursor.getBlocksToSkip();
+                    }
                 }
             }
-        }*/
+        }
 
         this.operatingPos++;
     }

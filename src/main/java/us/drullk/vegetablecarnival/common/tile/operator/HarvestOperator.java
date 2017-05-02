@@ -3,7 +3,6 @@ package us.drullk.vegetablecarnival.common.tile.operator;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
-import net.minecraft.block.IGrowable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -75,6 +74,6 @@ public class HarvestOperator implements IFarmOperator
             }
         }
 
-        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1);
+        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1, cursor.getFacing());
     }
 }

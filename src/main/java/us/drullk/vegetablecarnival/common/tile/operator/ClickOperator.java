@@ -4,7 +4,6 @@ import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
@@ -23,7 +22,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class ClickOperator implements IFarmOperator {
     @Override
     public FarmCursor doOperation(FarmCursor cursor, TileEntityVCMachine machine, BlockPos keyPos) {
-        TileEntity te = cursor.getWorld().getTileEntity(keyPos.down());
+        TileEntity te = cursor.getWorld().getTileEntity(keyPos.offset(cursor.getFacing(), -1));
 
         if(te != null && te instanceof IInventory)
         {
@@ -35,7 +34,7 @@ public class ClickOperator implements IFarmOperator {
 
             Common.unpack(vegetableMan, inventoryTE);
 
-            PlayerInteractEvent.LeftClickBlock leftClickEvent = ForgeHooks.onLeftClickBlock(vegetableMan, thisPos, EnumFacing.UP, ForgeHooks.rayTraceEyeHitVec(vegetableMan, 1.0D));
+            PlayerInteractEvent.LeftClickBlock leftClickEvent = ForgeHooks.onLeftClickBlock(vegetableMan, thisPos, cursor.getFacing(), ForgeHooks.rayTraceEyeHitVec(vegetableMan, 1.0D));
 
             IBlockState thisState = thisWorld.getBlockState(thisPos);
 
@@ -51,7 +50,7 @@ public class ClickOperator implements IFarmOperator {
                     {
                         thisState.getBlock().onBlockClicked(thisWorld, thisPos, vegetableMan);
 
-                        thisWorld.extinguishFire(null, thisPos, EnumFacing.UP);
+                        thisWorld.extinguishFire(null, thisPos, cursor.getFacing());
                     }
                     else
                     {
@@ -70,6 +69,6 @@ public class ClickOperator implements IFarmOperator {
             Common.repack(vegetableMan, inventoryTE, cursor);
         }
 
-        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1);
+        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1, cursor.getFacing());
     }
 }

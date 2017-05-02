@@ -1,9 +1,11 @@
 package us.drullk.vegetablecarnival;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockCommandBlock;
 import net.minecraft.block.BlockQuartz;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -51,6 +53,16 @@ public class VegetableCarnival {
         return mainOperators.get(blockState);
     }
 
+    public static boolean setOperation(IBlockState state, IFarmOperator operator)
+    {
+        if(mainOperators.containsKey(state)) {
+            System.out.println(state + " already exists in map! Use something else!");
+            return false;
+        }
+        else mainOperators.put(state, operator);
+        return true;
+    }
+
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         autoFarmOperator = new BlockVCMachine();
@@ -71,26 +83,30 @@ public class VegetableCarnival {
 
         proxy.preInit();
 
-        mainOperators.put(Blocks.EMERALD_BLOCK.getDefaultState(), new HeightOperator(new int[]{0, 1, 0}));
-        mainOperators.put(Blocks.DIAMOND_BLOCK.getDefaultState(), new HeightOperator(new int[]{0, -1, 0}));
+        setOperation(Blocks.EMERALD_BLOCK.getDefaultState(), new HeightOperator(1));
+        setOperation(Blocks.DIAMOND_BLOCK.getDefaultState(), new HeightOperator(-1));
 
-        mainOperators.put(Blocks.BEDROCK.getDefaultState(), new StopOperator());
-        mainOperators.put(Blocks.OBSIDIAN.getDefaultState(), new StopOperator());
+        setOperation(Blocks.BEDROCK.getDefaultState(), new StopOperator());
+        setOperation(Blocks.OBSIDIAN.getDefaultState(), new StopOperator());
 
-        mainOperators.put(Blocks.LAPIS_BLOCK.getDefaultState(), new UseOperator());
+        setOperation(Blocks.LAPIS_BLOCK.getDefaultState(), new UseOperator());
 
-        mainOperators.put(Blocks.QUARTZ_BLOCK.getDefaultState(), new BreakOperator());
+        setOperation(Blocks.QUARTZ_BLOCK.getDefaultState(), new BreakOperator());
 
-        mainOperators.put(Blocks.NETHER_BRICK.getDefaultState(), new ClickOperator());
+        setOperation(Blocks.NETHER_BRICK.getDefaultState(), new ClickOperator());
 
-        mainOperators.put(Blocks.COBBLESTONE.getDefaultState(), new TillOperator());
+        setOperation(Blocks.COBBLESTONE.getDefaultState(), new TillOperator());
 
-        mainOperators.put(Blocks.QUARTZ_BLOCK.getDefaultState().withProperty(BlockQuartz.VARIANT, BlockQuartz.EnumType.CHISELED), new HarvestOperator());
+        setOperation(Blocks.QUARTZ_BLOCK.getDefaultState().withProperty(BlockQuartz.VARIANT, BlockQuartz.EnumType.CHISELED), new HarvestOperator());
 
-        mainOperators.put(Blocks.WOOL.getStateFromMeta(0), new SkipOperator(1));
-        mainOperators.put(Blocks.WOOL.getStateFromMeta(1), new SkipOperator(2));
-        mainOperators.put(Blocks.WOOL.getStateFromMeta(2), new SkipOperator(3));
-        mainOperators.put(Blocks.WOOL.getStateFromMeta(3), new SkipOperator(4));
+        setOperation(Blocks.WOOL.getStateFromMeta(0), new SkipOperator(1));
+        setOperation(Blocks.WOOL.getStateFromMeta(1), new SkipOperator(2));
+        setOperation(Blocks.WOOL.getStateFromMeta(2), new SkipOperator(3));
+        setOperation(Blocks.WOOL.getStateFromMeta(3), new SkipOperator(4));
+
+        setOperation(Blocks.CLAY.getDefaultState(), new SetBlockOperator(Blocks.HARDENED_CLAY.getDefaultState()));
+
+        setOperation(Blocks.SOUL_SAND.getDefaultState(), new TreeChOperator());
     }
 
     @Mod.EventHandler

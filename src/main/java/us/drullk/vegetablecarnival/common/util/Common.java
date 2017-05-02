@@ -1,10 +1,13 @@
 package us.drullk.vegetablecarnival.common.util;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 
@@ -16,7 +19,7 @@ public class Common {
         return (radius*2)+1;
     }
 
-    public static boolean isCoordInsideNoZone(int posX, int posY, int noX, int noY)
+    public static boolean isCoordOutOfNoZone(int posX, int posY, int noX, int noY)
     {
         return posX<-noX||posY<-noY||posX>noX||posY>noY;
     }
@@ -39,7 +42,10 @@ public class Common {
         return interceptingFaces;
     }
 
-    public static void unpack(EntityPlayer vegetableMan, IInventory inventoryTE) {
+    public static void unpack(EntityPlayer vegetableMan, @Nullable IInventory inventoryTE) {
+        if (inventoryTE == null)
+            return;
+
         for(int i = 0; i < inventoryTE.getSizeInventory() && i < vegetableMan.inventory.getSizeInventory(); i++) {
             ItemStack stackIn = inventoryTE.removeStackFromSlot(i);
 
@@ -74,5 +80,9 @@ public class Common {
     public static boolean isStackNull(@Nullable ItemStack stack)
     {
         return stack == null;
+    }
+
+    public static boolean isLogOrLeaves(IBlockState state, World world, BlockPos pos) {
+        return state.getBlock().isWood(world, pos) || state.getBlock().isLeaves(state, world, pos);
     }
 }

@@ -20,6 +20,6 @@ public class SkipOperator implements IFarmOperator {
 
     @Override
     public FarmCursor doOperation(FarmCursor cursor, TileEntityVCMachine machine, final BlockPos keyPos) {
-        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, skip);
+        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, skip, cursor.getFacing());
     }
 }

@@ -20,7 +20,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class BreakOperator implements IFarmOperator {
     @Override
     public FarmCursor doOperation(FarmCursor cursor, TileEntityVCMachine machine, BlockPos keyPos) {
-        TileEntity te = cursor.getWorld().getTileEntity(keyPos.down());
+        TileEntity te = cursor.getWorld().getTileEntity(keyPos.offset(cursor.getFacing(), -1));
 
         if(te != null && te instanceof IInventory)
         {
@@ -60,6 +60,6 @@ public class BreakOperator implements IFarmOperator {
             Common.repack(vegetableMan, inventoryTE, cursor);
         }
 
-        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1);
+        return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1, cursor.getFacing());
     }
 }

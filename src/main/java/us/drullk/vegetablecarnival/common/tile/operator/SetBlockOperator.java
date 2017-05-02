@@ -1,6 +1,7 @@
 package us.drullk.vegetablecarnival.common.tile.operator;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
@@ -10,16 +11,16 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class HeightOperator implements IFarmOperator
-{
-    private final int offsetData;
+public class SetBlockOperator implements IFarmOperator {
+    private final IBlockState blockstate;
 
-    public HeightOperator(int offset) {
-        offsetData = offset;
+    public SetBlockOperator(IBlockState state) {
+        blockstate = state;
     }
 
     @Override
-    public FarmCursor doOperation(final FarmCursor cursor, final TileEntityVCMachine machine, final BlockPos keyPos) {
-        return cursor.moveCursor(cursor.getFacing(), offsetData);
+    public FarmCursor doOperation(FarmCursor cursor, TileEntityVCMachine machine, BlockPos keyPos) {
+        cursor.getWorld().setBlockState(cursor.getPos(), blockstate);
+        return cursor.copy();
     }
 }
