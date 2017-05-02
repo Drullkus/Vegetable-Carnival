@@ -104,7 +104,7 @@ public class VegetableCarnival {
         setOperation(Blocks.WOOL.getStateFromMeta(2), new SkipOperator(3));
         setOperation(Blocks.WOOL.getStateFromMeta(3), new SkipOperator(4));
 
-        //setOperation(Blocks.CLAY.getDefaultState(), new SetBlockOperator(Blocks.HARDENED_CLAY.getDefaultState()));
+        setOperation(Blocks.CLAY.getDefaultState(), new SetBlockOperator(Blocks.HARDENED_CLAY.getDefaultState()));
 
         setOperation(Blocks.SOUL_SAND.getDefaultState(), new TreeChOperator());
     }

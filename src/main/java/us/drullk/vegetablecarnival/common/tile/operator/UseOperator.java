@@ -38,7 +38,7 @@ public class UseOperator implements IFarmOperator
             IBlockState thisState = thisWorld.getBlockState(thisPos);
             FakePlayer vegetableMan = machine.getFakePlayer();
 
-            Common.unpack(vegetableMan, inventoryTE);
+            Common.unpack(vegetableMan, inventoryTE, cursor);
 
             ItemStack stackHeld = vegetableMan.getHeldItemMainhand();
 

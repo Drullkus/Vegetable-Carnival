@@ -177,9 +177,15 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                 masterPos.getY()+posSecondaryOffset >= 0 &&
                 masterPos.getY()+posSecondaryOffset < 256)
             ) {
-                BlockPos thisPos = this.getPos()
+                BlockPos cursorPos = this.getPos().offset(thisFacing)
                         .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[0]), posPrimaryOffset)
                         .offset(EnumFacing.getFacingFromAxis(EnumFacing.AxisDirection.POSITIVE, interceptingAxes[1]), posSecondaryOffset);
+                BlockPos thisPos;
+
+                if (getWorld().getBlockState(getPos().offset(thisFacing.getOpposite())) == Blocks.GLOWSTONE.getDefaultState())
+                    thisPos = this.getPos().offset(thisFacing.getOpposite(), 2);
+                else
+                    thisPos = cursorPos;
 
                 if (thisPos.getY() < 0 || thisPos.getY() > 255 ) {
                     System.out.println("SAFEGUARD FAILURE! TE at " + masterPos + " on Axis " + thisAxis + " tried to operate out of Y bounds at " + thisPos);
@@ -187,11 +193,12 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                     return;
                 }
 
-                FarmCursor farmCursor = new FarmCursor(thisPos, this.getWorld(), null, 0, thisFacing);
+                FarmCursor farmCursor = new FarmCursor(cursorPos, this.getWorld(), null, 0, thisFacing);
+                BlockPos keyPos = null;
 
                 int limit = 20;
-                for(int i = 0; i < limit && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++) {
-                    BlockPos keyPos = thisPos.offset(thisFacing, -1-i-farmCursor.getBlocksToSkip());
+                for(int i = 0; (keyPos == null || thisPos.offset(thisFacing, 0-i-farmCursor.getBlocksToSkip()).getY() >= 0) && i < limit && farmCursor.getOrder() == IFarmOperator.orders.CONTINUE; i++) {
+                    keyPos = thisPos.offset(thisFacing, 0-i-farmCursor.getBlocksToSkip());
                     IBlockState keyState = this.getWorld().getBlockState(keyPos);
                     IFarmOperator operator = VegetableCarnival.getOperation(keyState);
 

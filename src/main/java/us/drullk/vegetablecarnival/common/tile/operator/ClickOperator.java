@@ -32,7 +32,7 @@ public class ClickOperator implements IFarmOperator {
             BlockPos thisPos = cursor.getPos();
             FakePlayer vegetableMan = machine.getFakePlayer();
 
-            Common.unpack(vegetableMan, inventoryTE);
+            Common.unpack(vegetableMan, inventoryTE, cursor);
 
             PlayerInteractEvent.LeftClickBlock leftClickEvent = ForgeHooks.onLeftClickBlock(vegetableMan, thisPos, cursor.getFacing(), ForgeHooks.rayTraceEyeHitVec(vegetableMan, 1.0D));
 

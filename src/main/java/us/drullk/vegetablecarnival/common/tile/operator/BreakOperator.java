@@ -27,7 +27,7 @@ public class BreakOperator implements IFarmOperator {
             IInventory inventoryTE = (IInventory) te;
             FakePlayer vegetableMan = machine.getFakePlayer();
 
-            Common.unpack(vegetableMan, inventoryTE);
+            Common.unpack(vegetableMan, inventoryTE, cursor);
 
             // ------------------
 
