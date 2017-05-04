@@ -15,6 +15,7 @@ public class ClientProxy extends CommonProxy {
     public void preInit()
     {
         registerItemModel(Item.getItemFromBlock(VegetableCarnival.autoFarmOperator));
+        registerItemModel(Item.getItemFromBlock(VegetableCarnival.farmPower));
         registerItemModel(Item.getItemFromBlock(VegetableCarnival.farmCable));
     }
 

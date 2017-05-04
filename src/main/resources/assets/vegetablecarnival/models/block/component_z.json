@@ -1,0 +1,8 @@
+{
+    "parent": "vegetablecarnival:block/axal_cube",
+    "textures": {
+        "x": "vegetablecarnival:blocks/cable_h",
+        "y": "vegetablecarnival:blocks/cable_v",
+        "z": "vegetablecarnival:blocks/cable_end"
+    }
+}

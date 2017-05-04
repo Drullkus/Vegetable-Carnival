@@ -12,11 +12,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
-import org.lwjgl.Sys;
 import us.drullk.vegetablecarnival.VegetableCarnival;
 import us.drullk.vegetablecarnival.api.FarmCursor;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
 import us.drullk.vegetablecarnival.common.block.BlockVCCable;
+import us.drullk.vegetablecarnival.common.block.BlockVCComponent;
 import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 import us.drullk.vegetablecarnival.common.util.Common;
 
@@ -28,11 +28,13 @@ import static us.drullk.vegetablecarnival.common.util.VCConfig.maximumRadius;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public class TileEntityVCMachine extends TileEntity implements ITickable {
+public class TileEntityVCMachine extends TileEntity {
     //private static final String FAKE_PLAYER_NAME = "[VEGETABLE_MAN]";
     //private static final UUID FAKE_PLAYER_UUID = new UUID(0x98207c63a54c4f1dL, 0x965f71e7a5f7f1aaL);
 
     //private final FakePlayer vegetableCarnivalFakePlayer = FakePlayerFactory.get((WorldServer) this.getWorld(), new GameProfile(FAKE_PLAYER_UUID, FAKE_PLAYER_NAME));
+
+    private boolean isNew = true;
 
     private int operationsPerTick = 0;
 
@@ -63,9 +65,12 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         return FakePlayerFactory.getMinecraft((WorldServer) world);
     }
 
-    @Override
     public void update()
     {
+        if (isNew){
+            assembleFarm();
+        }
+
         if(this.getWorld().getBlockState(this.pos).getBlock() == VegetableCarnival.autoFarmOperator && this.assembled && !world.isRemote)
             for (int i = 0; i < this.operationsPerTick; i++) {
                 if (this.operatingPos >= getDiameterFromRadiusPlusCenter(this.radiusX) * getDiameterFromRadiusPlusCenter(this.radiusY))
@@ -79,12 +84,10 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         IBlockState thisState = getWorld().getBlockState(this.getPos());
         thisFacing = thisState.getValue(BlockVCMachine.FACING);
 
-        dissassembleFarm(thisState);
+        //dissassembleFarm(thisState);
 
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
         EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
-        IBlockState conduitOff = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, false);
-        IBlockState conduitOn = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, true);
 
         BlockPos masterPos = this.getPos(); // Less getPos() getPos() repetition
         int[] scannedRadii = new int[4];
@@ -94,7 +97,7 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
                 IBlockState stateCheck = this.getWorld().getBlockState(posCheck);
                 TileEntity tileCheck = this.getWorld().getTileEntity(posCheck);
 
-                if(stateCheck == conduitOff.withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()) &&
+                if(stateCheck.getBlock() instanceof BlockVCComponent && stateCheck == stateCheck.withProperty(BlockVCCable.VALIDATION, false).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()) &&
                         tileCheck != null && tileCheck instanceof TileEntityVCComponent && ((TileEntityVCComponent) tileCheck).getMaster() == null)
                     scannedRadii[direction]++;
                 else
@@ -115,7 +118,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
         for(int direction = 0; direction < scannedRadii.length; direction++)
             for(int length = 1; length <= scannedRadii[direction]; length++) {
                 BlockPos posGet = masterPos.offset(interceptingFaces[direction], length);
-                this.getWorld().setBlockState(posGet, conduitOn.withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()));
+                IBlockState state = this.getWorld().getBlockState(posGet);
+                this.getWorld().setBlockState(posGet, state.withProperty(BlockVCCable.VALIDATION, true).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()));
                 ((TileEntityVCComponent) this.getWorld().getTileEntity(posGet)).setMasterPos(masterPos);
             }
 
@@ -137,16 +141,15 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
 
         EnumFacing.Axis[] interceptingAxes = Common.getInterceptingAxes(thisFacing.getAxis()); // Axes that intercept Controller's Axis
         EnumFacing[] interceptingFaces = Common.getInterceptingFaces(interceptingAxes); // Faces on above Axes intercepting Controller's Axis
-        IBlockState conduitOff = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, false);
-        IBlockState conduitOn = VegetableCarnival.farmCable.getDefaultState().withProperty(BlockVCCable.VALIDATION, true);
 
         int[] scannedRadii = new int[]{farmMachineRadiusPrimary, farmMachineRadiusPrimary, farmMachineRadiusSecondary, farmMachineRadiusSecondary};
         for (int direction = 0; direction < scannedRadii.length; direction++)
             for(int length = 1; length <= scannedRadii[direction]; length++) {
                 BlockPos posGet = this.getPos().offset(interceptingFaces[direction], length);
+                IBlockState thisState = this.getWorld().getBlockState(posGet);
 
-                if(this.getWorld().getBlockState(posGet) == conduitOn.withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis())) {
-                    this.getWorld().setBlockState(posGet, conduitOff.withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()));
+                if(thisState.getBlock() instanceof BlockVCComponent && thisState == thisState.withProperty(BlockVCCable.VALIDATION, true).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis())) {
+                    this.getWorld().setBlockState(posGet, thisState.withProperty(BlockVCCable.VALIDATION, false).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()));
                     ((TileEntityVCComponent) this.getWorld().getTileEntity(posGet)).setMasterPos(null);
                 }
             }
@@ -237,6 +240,8 @@ public class TileEntityVCMachine extends TileEntity implements ITickable {
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
         super.writeToNBT(compound);
+
+        compound.setBoolean("isNew", isNew);
 
         //compound.setInteger("rotation", thisFacing.ordinal());
 

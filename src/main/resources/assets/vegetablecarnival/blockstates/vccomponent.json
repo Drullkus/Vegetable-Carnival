@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "axis=x,valid=false": { "model": "vegetablecarnival:component_x" },
+        "axis=y,valid=false": { "model": "vegetablecarnival:component_y" },
+        "axis=z,valid=false": { "model": "vegetablecarnival:component_z" },
+        "axis=x,valid=true":  { "model": "vegetablecarnival:component_x" },
+        "axis=y,valid=true":  { "model": "vegetablecarnival:component_y" },
+        "axis=z,valid=true":  { "model": "vegetablecarnival:component_z" }
+    }
+}

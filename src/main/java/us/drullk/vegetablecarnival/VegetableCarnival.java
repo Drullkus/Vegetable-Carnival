@@ -1,11 +1,9 @@
 package us.drullk.vegetablecarnival;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockCommandBlock;
 import net.minecraft.block.BlockQuartz;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -16,6 +14,8 @@ import net.minecraftforge.fml.common.registry.IForgeRegistryEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import us.drullk.vegetablecarnival.api.IFarmOperator;
+import us.drullk.vegetablecarnival.common.block.BlockVCComponent;
+import us.drullk.vegetablecarnival.common.tile.TileEntityVCCable;
 import us.drullk.vegetablecarnival.common.tile.operator.*;
 import us.drullk.vegetablecarnival.common.util.LibMisc;
 import us.drullk.vegetablecarnival.common.util.VCConfig;
@@ -44,6 +44,7 @@ public class VegetableCarnival {
     public static CommonProxy proxy;
 
     public static Block autoFarmOperator;
+    public static Block farmPower;
     public static Block farmCable;
 
     private static IdentityHashMap<IBlockState, IFarmOperator> mainOperators = new IdentityHashMap<>();
@@ -66,18 +67,23 @@ public class VegetableCarnival {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         autoFarmOperator = new BlockVCMachine();
-        farmCable = new BlockVCCable();
+        farmPower = new BlockVCCable();
+        farmCable = new BlockVCComponent();
 
         autoFarmOperator.setUnlocalizedName("vcmachine");
-        farmCable.setUnlocalizedName("vccable");
+        farmPower.setUnlocalizedName("vccable");
+        farmCable.setUnlocalizedName("vccomponent");
 
         ItemBlockVC ib_vc_machine = new ItemBlockVC(autoFarmOperator, false);
-        ItemBlockVC ib_vc_cable = new ItemBlockVC(farmCable, true);
+        ItemBlockVC ib_vc_cable = new ItemBlockVC(farmPower, false);
+        ItemBlockVC ib_vc_comp = new ItemBlockVC(farmCable, false);
 
         register(autoFarmOperator, "vcmachine");
         register(ib_vc_machine, "vcmachine");
-        register(farmCable, "vccable");
+        register(farmPower, "vccable");
         register(ib_vc_cable, "vccable");
+        register(farmCable, "vccomponent");
+        register(ib_vc_comp, "vccomponent");
 
         VCConfig.initProps(event.getModConfigurationDirectory());
 
@@ -112,7 +118,8 @@ public class VegetableCarnival {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         GameRegistry.registerTileEntity(TileEntityVCMachine.class, "vcmachine");
-        GameRegistry.registerTileEntity(TileEntityVCComponent.class, "vccable");
+        GameRegistry.registerTileEntity(TileEntityVCCable.class, "vccable");
+        GameRegistry.registerTileEntity(TileEntityVCComponent.class, "vccomponent");
 
         proxy.init();
     }

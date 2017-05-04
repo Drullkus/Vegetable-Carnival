@@ -34,43 +34,39 @@ public class HarvestOperator implements IFarmOperator
             {
                 TileEntity te = cursor.getWorld().getTileEntity(keyPos.down());
 
-                if(te != null && te instanceof IInventory)
+                FakePlayer vegetableMan = machine.getFakePlayer();
+
+                Common.unpack(vegetableMan, te, cursor);
+
+                // ------------------
+
+                World thisWorld = cursor.getWorld();
+                BlockPos thisPos = cursor.getPos();
+
+                ItemStack stack = vegetableMan.getHeldItemMainhand();
+                ItemStack duplicateStack = stack == null ? null : stack.copy();
+
+                boolean isHarvestable = thisState.getBlock().canHarvestBlock(thisWorld, thisPos, vegetableMan);
+
+                if(!Common.isStackNull(stack))
                 {
-                    IInventory inventoryTE = (IInventory) te;
-                    FakePlayer vegetableMan = machine.getFakePlayer();
-
-                    Common.unpack(vegetableMan, inventoryTE, cursor);
-
-                    // ------------------
-
-                    World thisWorld = cursor.getWorld();
-                    BlockPos thisPos = cursor.getPos();
-
-                    ItemStack stack = vegetableMan.getHeldItemMainhand();
-                    ItemStack duplicateStack = stack == null ? null : stack.copy();
-
-                    boolean isHarvestable = thisState.getBlock().canHarvestBlock(thisWorld, thisPos, vegetableMan);
-
-                    if(!Common.isStackNull(stack))
-                    {
-                        stack.onBlockDestroyed(thisWorld, thisState, thisPos, vegetableMan);
-                    }
-
-                    boolean isRemovedByPlayer = thisState.getBlock().removedByPlayer(thisState, thisWorld, thisPos, vegetableMan, isHarvestable);
-                    if (isRemovedByPlayer)
-                    {
-                        thisState.getBlock().onBlockDestroyedByPlayer(thisWorld, thisPos, thisState);
-                    }
-
-                    if(isHarvestable && isRemovedByPlayer)
-                    {
-                        thisState.getBlock().harvestBlock(thisWorld, vegetableMan, thisPos, thisState, thisWorld.getTileEntity(thisPos), duplicateStack);
-                    }
-
-                    // ------------------
-
-                    Common.repack(vegetableMan, inventoryTE, cursor);
+                    stack.onBlockDestroyed(thisWorld, thisState, thisPos, vegetableMan);
                 }
+
+                boolean isRemovedByPlayer = thisState.getBlock().removedByPlayer(thisState, thisWorld, thisPos, vegetableMan, isHarvestable);
+                if (isRemovedByPlayer)
+                {
+                    thisState.getBlock().onBlockDestroyedByPlayer(thisWorld, thisPos, thisState);
+                }
+
+                if(isHarvestable && isRemovedByPlayer)
+                {
+                    thisState.getBlock().harvestBlock(thisWorld, vegetableMan, thisPos, thisState, thisWorld.getTileEntity(thisPos), duplicateStack);
+                }
+
+                // ------------------
+
+                Common.repack(vegetableMan, te, cursor);
             }
         }
 

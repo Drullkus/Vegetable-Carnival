@@ -3,14 +3,15 @@ package us.drullk.vegetablecarnival.common.util;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import us.drullk.vegetablecarnival.api.FarmCursor;
-import us.drullk.vegetablecarnival.common.block.BlockVCMachine;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -45,55 +46,63 @@ public class Common {
         return interceptingFaces;
     }
 
-    public static void unpack(EntityPlayer vegetableMan, @Nullable IInventory inventoryTE, FarmCursor cursor) {
+    public static void unpack(EntityPlayer vegetableMan, @Nullable TileEntity te, FarmCursor cursor) {
         movePlayerToCursor(vegetableMan, cursor);
+        if (te == null || !te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) return;
 
-        if (inventoryTE == null) {
-            return;
-        }
+        IItemHandler itemHandler = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
 
-        for(int i = 0; i < inventoryTE.getSizeInventory() && i < vegetableMan.inventory.getSizeInventory(); i++) {
-            ItemStack stackIn = inventoryTE.removeStackFromSlot(i);
+        for(int i = 0; i < itemHandler.getSlots() && i < vegetableMan.inventory.getSizeInventory(); i++) {
+            ItemStack stackCheck = itemHandler.getStackInSlot(i);
 
-            if (!vegetableMan.inventory.addItemStackToInventory(stackIn))
-                inventoryTE.setInventorySlotContents(i, stackIn);
+            if (!isStackNull(stackCheck)){
+                ItemStack stackIn = itemHandler.extractItem(i, stackCheck.stackSize, false);
+
+                if (!vegetableMan.inventory.addItemStackToInventory(stackIn)) {
+                    itemHandler.insertItem(i, stackIn, false);
+                    break;
+                }
+            }
         }
     }
 
-    public static void repack(EntityPlayer vegetableMan, @Nullable IInventory inventoryTE, FarmCursor cursor) {
+    public static void repack(EntityPlayer vegetableMan, @Nullable TileEntity te, FarmCursor cursor) {
         movePlayerToCursor(vegetableMan, cursor);
 
-        if (inventoryTE == null) {
+        if (te == null || !te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
             vegetableMan.inventory.dropAllItems();
             return;
         }
 
-        for(int i = 0; i < vegetableMan.inventory.getSizeInventory(); i++) {
-            ItemStack stackOut = vegetableMan.inventory.getStackInSlot(i);
+        IItemHandler itemHandler = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
 
-            if(!isStackNull(stackOut)) {
-                stackOut = vegetableMan.inventory.removeStackFromSlot(i);
+        for(int i = 0; i < vegetableMan.inventory.getSizeInventory(); i++) {
+            ItemStack stackCheck = vegetableMan.inventory.getStackInSlot(i);
+
+            if(!isStackNull(stackCheck)) {
+                ItemStack stackOut = vegetableMan.inventory.removeStackFromSlot(i);
 
                 boolean mustDump = !isStackNull(stackOut);
 
-                for (int j = 0; mustDump && j < vegetableMan.inventory.getSizeInventory() && j < inventoryTE.getSizeInventory(); j++) {
-                    if( isStackNull(inventoryTE.getStackInSlot(j)) && inventoryTE.isItemValidForSlot(j, stackOut) ) {
-                        inventoryTE.setInventorySlotContents(j, stackOut);
+                for (int j = 0; mustDump && j < itemHandler.getSlots(); j++) {
+                    stackOut = itemHandler.insertItem(j, stackOut, false);
+
+                    if(isStackNull(stackOut)) {
                         mustDump = false;
                         break;
                     }
                 }
 
-                if(mustDump)
-                    cursor.getWorld().spawnEntityInWorld(new EntityItem(cursor.getWorld(), 0.5, 0.5, 0.5, stackOut));
+                if(mustDump) {
+                    cursor.getWorld().spawnEntityInWorld(new EntityItem(cursor.getWorld(), (double) cursor.getPos().getX(), (double) cursor.getPos().getY(), (double) cursor.getPos().getZ(), stackOut));
+                }
             }
         }
 
-        vegetableMan.inventory.dropAllItems();
+        //vegetableMan.inventory.dropAllItems();
     }
 
-    public static boolean isStackNull(@Nullable ItemStack stack)
-    {
+    public static boolean isStackNull(@Nullable ItemStack stack) {
         return stack == null;
     }
 
@@ -116,15 +125,16 @@ public class Common {
 
     public static void packDrops(EntityPlayer vegetableMan, List<ItemStack> stacks, World thisWorld, BlockPos thisPos) {
         for (ItemStack stack : stacks) {
-            if (!vegetableMan.inventory.addItemStackToInventory(stack));
-            thisWorld.spawnEntityInWorld(new EntityItem(thisWorld, 0.5, 0.5, 0.5, stack));
+            if (!vegetableMan.inventory.addItemStackToInventory(stack))
+                thisWorld.spawnEntityInWorld(new EntityItem(thisWorld, (double) thisPos.getX(),(double) thisPos.getY(),(double) thisPos.getZ(), stack));
         }
     }
 
     private static void movePlayerToCursor(EntityPlayer vegetableMan, FarmCursor cursor) {
         boolean clip = vegetableMan.noClip;
         vegetableMan.noClip = true;
-        vegetableMan.moveEntity(cursor.getPos().getX(), cursor.getPos().getY(), cursor.getPos().getZ());
+        vegetableMan.setPosition((double) cursor.getPos().getX(),(double) cursor.getPos().getY(),(double) cursor.getPos().getZ());
+        //vegetableMan.moveEntity((double) cursor.getPos().getX(),(double) cursor.getPos().getY(),(double) cursor.getPos().getZ());
         vegetableMan.noClip = clip;
     }
 }

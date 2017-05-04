@@ -1,0 +1,19 @@
+{
+    "parent": "block/block",
+    "textures": {
+        "particle": "vegetablecarnival:blocks/cable_end"
+    },
+    "elements": [
+        {   "from": [ 0, 0, 0 ],
+            "to": [ 16, 16, 16 ],
+            "faces": {
+                "up":    { "texture": "#y", "cullface": "up" },
+                "down":  { "texture": "#y", "cullface": "down" },
+                "north": { "texture": "#z", "cullface": "north" },
+                "south": { "texture": "#z", "cullface": "south" },
+                "west":  { "texture": "#x", "cullface": "west" },
+                "east":  { "texture": "#x", "cullface": "east" }
+            }
+        }
+    ]
+}

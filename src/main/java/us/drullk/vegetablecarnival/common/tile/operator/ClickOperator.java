@@ -24,50 +24,45 @@ public class ClickOperator implements IFarmOperator {
     public FarmCursor doOperation(FarmCursor cursor, TileEntityVCMachine machine, BlockPos keyPos) {
         TileEntity te = cursor.getWorld().getTileEntity(keyPos.offset(cursor.getFacing(), -1));
 
-        if(te != null && te instanceof IInventory)
+        World thisWorld = cursor.getWorld();
+        BlockPos thisPos = cursor.getPos();
+        FakePlayer vegetableMan = machine.getFakePlayer();
+
+        Common.unpack(vegetableMan, te, cursor);
+
+        PlayerInteractEvent.LeftClickBlock leftClickEvent = ForgeHooks.onLeftClickBlock(vegetableMan, thisPos, cursor.getFacing(), ForgeHooks.rayTraceEyeHitVec(vegetableMan, 1.0D));
+
+        IBlockState thisState = thisWorld.getBlockState(thisPos);
+
+        if(leftClickEvent.isCanceled())
         {
-            IInventory inventoryTE = (IInventory) te;
-
-            World thisWorld = cursor.getWorld();
-            BlockPos thisPos = cursor.getPos();
-            FakePlayer vegetableMan = machine.getFakePlayer();
-
-            Common.unpack(vegetableMan, inventoryTE, cursor);
-
-            PlayerInteractEvent.LeftClickBlock leftClickEvent = ForgeHooks.onLeftClickBlock(vegetableMan, thisPos, cursor.getFacing(), ForgeHooks.rayTraceEyeHitVec(vegetableMan, 1.0D));
-
-            IBlockState thisState = thisWorld.getBlockState(thisPos);
-
-            if(leftClickEvent.isCanceled())
+            thisWorld.notifyBlockUpdate(thisPos, thisState, thisState, 3);
+        }
+        else
+        {
+            if(!thisState.getBlock().isAir(thisState, thisWorld, thisPos))
             {
-                thisWorld.notifyBlockUpdate(thisPos, thisState, thisState, 3);
-            }
-            else
-            {
-                if(!thisState.getBlock().isAir(thisState, thisWorld, thisPos))
+                if(leftClickEvent.getUseBlock() != Event.Result.DENY)
                 {
-                    if(leftClickEvent.getUseBlock() != Event.Result.DENY)
-                    {
-                        thisState.getBlock().onBlockClicked(thisWorld, thisPos, vegetableMan);
+                    thisState.getBlock().onBlockClicked(thisWorld, thisPos, vegetableMan);
 
-                        thisWorld.extinguishFire(null, thisPos, cursor.getFacing());
-                    }
-                    else
-                    {
-                        thisWorld.notifyBlockUpdate(thisPos, thisState, thisState, 3);
-                    }
+                    thisWorld.extinguishFire(null, thisPos, cursor.getFacing());
                 }
-
-                thisState = thisWorld.getBlockState(thisPos);
-
-                if(leftClickEvent.getUseItem() == Event.Result.DENY)
+                else
                 {
                     thisWorld.notifyBlockUpdate(thisPos, thisState, thisState, 3);
                 }
             }
 
-            Common.repack(vegetableMan, inventoryTE, cursor);
+            thisState = thisWorld.getBlockState(thisPos);
+
+            if(leftClickEvent.getUseItem() == Event.Result.DENY)
+            {
+                thisWorld.notifyBlockUpdate(thisPos, thisState, thisState, 3);
+            }
         }
+
+        Common.repack(vegetableMan, te, cursor);
 
         return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1, cursor.getFacing());
     }

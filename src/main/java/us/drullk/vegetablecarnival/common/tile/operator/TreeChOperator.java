@@ -40,9 +40,8 @@ public class TreeChOperator implements IFarmOperator {
         treePosStack.add(cursor.getPos());
 
         TileEntity te = cursor.getWorld().getTileEntity(keyPos.offset(cursor.getFacing(), -1));
-        IInventory inventoryTE = te != null && te instanceof IInventory ? (IInventory) te : null;
         FakePlayer vegetableMan = machine.getFakePlayer();
-        Common.unpack(vegetableMan, inventoryTE, cursor);
+        Common.unpack(vegetableMan, te, cursor);
 
         ItemStack stack = vegetableMan.getHeldItemMainhand();
         ItemStack duplicateStack = stack == null ? null : stack.copy();
@@ -85,7 +84,7 @@ public class TreeChOperator implements IFarmOperator {
             }
         }
 
-        Common.repack(vegetableMan, inventoryTE, cursor);
+        Common.repack(vegetableMan, te, cursor);
 
         return new FarmCursor(cursor.getPos(), cursor.getWorld(), cursor, 1, cursor.getFacing());
     }
