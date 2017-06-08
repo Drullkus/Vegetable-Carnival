@@ -37,6 +37,11 @@ public class BlockVCComponent extends BlockRotatedPillar implements ITileEntityP
     }
 
     @Override
+    public boolean hasTileEntity(IBlockState state) {
+        return state.getValue(VALIDATION);
+    }
+
+    @Override
     public IBlockState getStateFromMeta(int meta) {
         return meta < 6 ? this.getDefaultState().withProperty(AXIS, EnumFacing.Axis.values()[meta>>>1]).withProperty(VALIDATION, (meta&1) == 1) : this.getDefaultState();
     }

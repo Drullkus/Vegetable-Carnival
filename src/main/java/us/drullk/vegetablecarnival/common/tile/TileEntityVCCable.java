@@ -16,7 +16,7 @@ public class TileEntityVCCable extends TileEntityVCComponent implements IEnergyR
     }
 
     public boolean hasCapability(Capability<?> capability, EnumFacing facing) {
-        return capability == CapabilityEnergy.ENERGY && getMaster() != null || super.hasCapability(capability, facing);
+        return (capability == CapabilityEnergy.ENERGY && getMaster() != null) || super.hasCapability(capability, facing);
     }
 
     public <T> T getCapability(Capability<T> capability, EnumFacing facing) {

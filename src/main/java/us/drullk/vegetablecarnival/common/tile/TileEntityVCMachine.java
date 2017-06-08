@@ -95,10 +95,8 @@ public class TileEntityVCMachine extends TileEntity {
             for (int length = 1; length <= this.maxMachineSize; length++) {
                 BlockPos posCheck = masterPos.offset(interceptingFaces[direction], length);
                 IBlockState stateCheck = this.getWorld().getBlockState(posCheck);
-                TileEntity tileCheck = this.getWorld().getTileEntity(posCheck);
 
-                if(stateCheck.getBlock() instanceof BlockVCComponent && stateCheck == stateCheck.withProperty(BlockVCCable.VALIDATION, false).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()) &&
-                        tileCheck != null && tileCheck instanceof TileEntityVCComponent && ((TileEntityVCComponent) tileCheck).getMaster() == null)
+                if(stateCheck.getBlock() instanceof BlockVCComponent && stateCheck == stateCheck.withProperty(BlockVCCable.VALIDATION, false).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()))
                     scannedRadii[direction]++;
                 else
                     break;
@@ -148,10 +146,8 @@ public class TileEntityVCMachine extends TileEntity {
                 BlockPos posGet = this.getPos().offset(interceptingFaces[direction], length);
                 IBlockState thisState = this.getWorld().getBlockState(posGet);
 
-                if(thisState.getBlock() instanceof BlockVCComponent && thisState == thisState.withProperty(BlockVCCable.VALIDATION, true).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis())) {
+                if(thisState.getBlock() instanceof BlockVCComponent && thisState == thisState.withProperty(BlockVCCable.VALIDATION, true).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()))
                     this.getWorld().setBlockState(posGet, thisState.withProperty(BlockVCCable.VALIDATION, false).withProperty(BlockVCCable.AXIS, interceptingFaces[direction].getAxis()));
-                    ((TileEntityVCComponent) this.getWorld().getTileEntity(posGet)).setMasterPos(null);
-                }
             }
 
         //this.axisPrimary = null;

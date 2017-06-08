@@ -32,14 +32,20 @@ public class BlockVCCable extends BlockVCComponent {
     }
 
     @Override
+    public TileEntity createNewTileEntity(World world, int meta) {
+        return new TileEntityVCCable();
+    }
+
+    @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
         if (player.isCreative()) {
             TileEntity te = world.getTileEntity(pos);
+
             if (te != null && te instanceof TileEntityVCCable) {
                 TileEntityVCMachine master = ((TileEntityVCCable) te).getMaster();
-                if (master != null)
-                {
-                    if (!world.isRemote){
+
+                if (master != null) {
+                    if (!world.isRemote) {
                         master.update();
                     }
                     return true;
@@ -47,6 +53,6 @@ public class BlockVCCable extends BlockVCComponent {
             }
         }
 
-        return false;
+        return super.onBlockActivated(world, pos, state, player, hand, heldItem, side, hitX, hitY, hitZ);
     }
 }

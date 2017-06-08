@@ -22,6 +22,7 @@ class PoweredOperationHandler extends EnergyStorage {
         if( master == null || (!master.isFarmValidated()) || !this.canReceive() ) {
             return 0;
         } else {
+            //System.out.println("dabC");
             int energyReceived = maxReceive == 40 ? 40 : 0;
             if(!simulate && energyReceived == 40) master.update();
             return energyReceived;
