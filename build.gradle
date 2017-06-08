@@ -21,22 +21,24 @@ apply plugin: 'maven'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 
+group = 'us.drullk.vegetablecarnival'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 repositories {
     maven {
         name 'DVS1 Maven FS' // TCon, JEI
         url 'http://dvs1.progwml6.com/files/maven'
     }
+    maven {
+        name 'tterrag' // CTM
+        url 'http://maven.tterrag.com'
+    }
 }
 
-group = 'us.drullk.vegetablecarnival'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 dependencies {
-    //deobfCompile "slimeknights.mantle:Mantle:${minecraft_version}-${mantle_version}"
-    //deobfCompile "slimeknights:TConstruct:${minecraft_version}-${tconstruct_version}"
-
     deobfCompile "mezz.jei:jei_${minecraft_version}:${jei_version}"
+    deobfCompile "team.chisel.ctm:CTM:MC1.10.2-${ctm_version}"
 }
 
 version = "${mod_version}"
